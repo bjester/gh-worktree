@@ -3,7 +3,12 @@ from gh_worktree.hooks import Hook
 
 
 class CheckoutCommand(Command):
+    _name = "checkout"
+
     def __call__(self, branch_or_pr: str):
+        """Checkout an existing branch or PR as a worktree
+        :param branch_or_pr: The branch, PR number, or PR URL to create as a worktree
+        """
         self._context.assert_within_project()
         config = self._context.get_config()
 

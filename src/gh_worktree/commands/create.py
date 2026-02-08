@@ -5,6 +5,8 @@ from gh_worktree.hooks import Hook
 
 
 class CreateCommand(Command):
+    _name = "create"
+
     def __call__(self, worktree_name: str, *base_ref: Optional[str]):
         """
         Create a new worktree in the current project.

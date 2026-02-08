@@ -59,6 +59,8 @@ class RepositoryTarget(object):
 class InitCommand(Command):
     """Initialize a project for use with gh-worktree"""
 
+    _name = "init"
+
     def __call__(self, repo: str, *destination_dir: Optional[str]):
         """
         Initialize a project for using gh-worktree with it, by cloning the project and configuring
