@@ -1,0 +1,29 @@
+[project]
+name = "gh-worktree"
+version = "0.1.0"
+description = "github CLI extension for worktrees"
+readme = "README.md"
+authors = [
+    { name = "Blaine Jester", email = "bjester@quavalent.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "fire>=0.7.1",
+]
+
+[project.scripts]
+gh-worktree = "gh_worktree.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pre-commit"
+]
+
+[build-system]
+requires = ["uv_build>=0.9.17,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = ["tests"]

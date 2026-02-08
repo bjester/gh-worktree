@@ -1,0 +1,59 @@
+name: build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Set up Python
+        run: uv python install
+      - name: Build
+        run: make build
+      - name: Add PR number
+        if: github.event_name == 'pull_request'
+        run: echo ${{ github.event.pull_request.number }} > dist/PR_NUMBER.txt
+      - uses: actions/upload-artifact@v6
+        id: artifact-upload-step
+        if: github.event_name == 'pull_request'
+        with:
+          name: build_${{ github.event.pull_request.number }}
+          path: dist
+
+  comment-pr:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: build
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: build_output
+
+      - name: Read the PR number
+        id: pr_number_reader
+        run: echo "PR_NUMBER=$(cat build_output/PR_NUMBER.txt)" >> $GITHUB_ENV
+
+      - name: Create PR comment with asset link
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          message: |
+            🎉 **Build Assets are ready!**
+
+            You can download the artifacts from the [build run](https://github.com{{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}).
+            ```
+            $(ls -al build_output/)
+            ```
+          pr_number: ${{ env.PR_NUMBER }}

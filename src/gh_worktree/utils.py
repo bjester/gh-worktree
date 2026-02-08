@@ -1,0 +1,63 @@
+import os
+import shlex
+import subprocess
+from typing import List
+
+# Simple ANSI colors for the prefix
+COLORS = ["\033[92m", "\033[94m", "\033[95m", "\033[96m", "\033[93m"]
+COLOR_RESET = "\033[0m"
+
+
+def find_up(name: str, start_path: str):
+    """
+    Looks upward for a directory that has file or directory with `name`
+    :param name: The name of the file or directory to look for
+    :param start_path: The path to start looking from
+    :return: The path to the directory
+    """
+    search_path = os.path.realpath(start_path)
+
+    while True:
+        name_path = os.path.join(search_path, name)
+        if os.path.isdir(search_path) and os.path.exists(name_path):
+            return name_path
+        if search_path == os.path.dirname(search_path):
+            break
+        search_path = os.path.dirname(search_path)
+
+    raise RuntimeError(f"Could not find {name} in {start_path} ancestors")
+
+
+def stream_exec(command: List[str], wait_time: int = 60, cwd: str = None) -> int:
+    """
+    Executes a command in a subprocess and stream's its output to stdout.
+    :param command: The command to execute as a list of strings
+    :param wait_time: The number of seconds to wait for the process to finish
+    :param cwd: The working directory to execute the command in
+    :return: The exit code of the process
+    """
+    with subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+        cwd=cwd,
+    ) as process:
+        output_color = COLORS[process.pid % len(COLORS)]
+        print(f"Executing: {output_color}{shlex.join(command)}{COLOR_RESET}")
+
+        command_prefix = command[:2]
+        if os.path.exists(command_prefix[0]):
+            command_prefix[0] = os.path.basename(command_prefix[0])
+
+        for line in process.stdout:
+            print(
+                f"{output_color}{shlex.join(command_prefix)} |{COLOR_RESET} {line}",
+                end="",
+                flush=True,
+            )
+
+        process.wait(wait_time)
+
+    return process.returncode
