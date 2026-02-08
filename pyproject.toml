@@ -17,6 +17,7 @@ gh-worktree = "gh_worktree.cli:main"
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
+    "exceptiongroup; python_version < '3.11'",
     "pre-commit"
 ]
 
