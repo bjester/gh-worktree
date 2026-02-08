@@ -44,7 +44,9 @@ jobs:
 
       - name: Read the asset list
         id: asset-list
-        run: echo "ASSET_LIST='$(ls build_output/)'" >> $GITHUB_ENV
+        run: |
+          echo "WHL_CHECKSUM='$(sha256sum build_output/*whl)'" >> $GITHUB_ENV
+          echo "PEX_CHECKSUM='$(sha256sum build_output/*pex)'" >> $GITHUB_ENV
 
       - name: Create PR comment with asset link
         uses: thollander/actions-comment-pull-request@v3
@@ -54,6 +56,7 @@ jobs:
 
             You can download the artifacts from the [build run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
             ```
-            ${{ env.ASSET_LIST }}
+            ${{ env.WHL_CHECKSUM }}
+            ${{ env.PEX_CHECKSUM }}
             ```
           comment-tag: build-assets
