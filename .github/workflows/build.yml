@@ -44,7 +44,7 @@ jobs:
 
       - name: Read the asset list
         id: asset-list
-        run: echo "ASSET_LIST=$(ls build_output/)" >> $GITHUB_ENV
+        run: echo "ASSET_LIST='$(ls build_output/)'" >> $GITHUB_ENV
 
       - name: Create PR comment with asset link
         uses: thollander/actions-comment-pull-request@v3
