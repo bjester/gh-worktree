@@ -42,9 +42,11 @@ jobs:
           artifact-ids: ${{ needs.build.outputs.artifact-id }}
           path: build_output
 
-      - name: Read the PR number
-        id: pr_number_reader
-        run: echo "PR_NUMBER=$(cat build_output/PR_NUMBER.txt)" >> $GITHUB_ENV
+      - name: Read the asset list
+        id: asset-list
+        run: |
+          echo "WHL_CHECKSUM='$(sha256sum build_output/*whl)'" >> $GITHUB_ENV
+          echo "PEX_CHECKSUM='$(sha256sum build_output/*pex)'" >> $GITHUB_ENV
 
       - name: Create PR comment with asset link
         uses: thollander/actions-comment-pull-request@v3
@@ -52,8 +54,9 @@ jobs:
           message: |
             🎉 **Build Assets are ready!**
 
-            You can download the artifacts from the [build run](https://github.com{{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}).
+            You can download the artifacts from the [build run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
             ```
-            $(ls -al build_output/)
+            ${{ env.WHL_CHECKSUM }}
+            ${{ env.PEX_CHECKSUM }}
             ```
-          pr_number: ${{ env.PR_NUMBER }}
+          comment-tag: build-assets
