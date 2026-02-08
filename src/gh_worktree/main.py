@@ -1,3 +1,4 @@
+from gh_worktree import __version__
 from gh_worktree.runtime import Runtime
 from gh_worktree.command import Command
 from gh_worktree.commands.checkout import CheckoutCommand
@@ -30,3 +31,8 @@ class WorktreeCommands(Command):
         """
         setattr(self, f"_{name}", command)
         setattr(self, name, command.__call__)
+
+    def version(self):
+        """Outputs the version of gh-worktree"""
+        print(f"gh-worktree {__version__}")
+
