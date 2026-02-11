@@ -1,6 +1,6 @@
-from functools import cached_property
 import json
 import subprocess
+from typing import Optional
 from typing import Union
 
 from gh_worktree.context import Context
@@ -20,7 +20,7 @@ class GithubCLI(object):
         )
         return result.stdout.strip()
 
-    def pr_status(self, pr_number: Union[int, str]):
+    def pr_status(self, pr_number: Union[int, str], owner_repo: Optional[str] = None):
         fields = [
             "number",
             "author",
@@ -32,6 +32,10 @@ class GithubCLI(object):
             "title",
             "url",
         ]
+        args = ["pr", "view", "--json"]
+        if owner_repo:
+            args.extend(["--repo", owner_repo])
+        args.extend([",".join(fields), pr_number])
         output = self._run("pr", "view", "--json", ",".join(fields), pr_number)
         return json.loads(output)
 
