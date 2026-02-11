@@ -8,7 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+.envrc
 
 # IDE
 .idea/
 /*.iml
+
+# Testing
+playground/
