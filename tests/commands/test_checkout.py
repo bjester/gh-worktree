@@ -4,7 +4,6 @@ from unittest import TestCase
 from unittest.mock import ANY
 from unittest.mock import Mock
 
-import pytest
 from gh_worktree.commands.checkout import CheckoutCommand
 from gh_worktree.git import GitRemote
 from gh_worktree.hooks import Hook
@@ -44,6 +43,7 @@ class CheckoutCommandTestCase(TestCase):
             git=self.git,
             gh=self.gh,
             get_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
+            get_default_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
         )
         self.command = CheckoutCommand(self.runtime)
 
@@ -53,18 +53,17 @@ class CheckoutCommandTestCase(TestCase):
         assert self.context.assert_called is True
 
         self.git.fetch.assert_called_once_with("origin", "feature:feature")
-        self.runtime.get_remote.assert_called_once_with()
+        self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
 
     def test_checkout_command_uses_remote_and_branch_name(self):
-        self.command("aremote/feature")
+        self.command("feature", remote="aremote")
 
         assert self.context.assert_called is True
 
         self.git.fetch.assert_called_once_with("aremote", "feature:feature")
-        self.runtime.get_remote.assert_called_once_with()
         self.git.open_worktree.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
@@ -78,7 +77,7 @@ class CheckoutCommandTestCase(TestCase):
 
         assert self.context.assert_called is True
         self.gh.pr_status.assert_called_once_with("1234", owner_repo="octo/repo")
-        self.runtime.get_remote.assert_called_once_with()
+        self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
@@ -92,7 +91,7 @@ class CheckoutCommandTestCase(TestCase):
 
         assert self.context.assert_called is True
         self.gh.pr_status.assert_called_once_with("1234", owner_repo="octo/repo")
-        self.runtime.get_remote.assert_called_once_with()
+        self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
@@ -100,9 +99,9 @@ class CheckoutCommandTestCase(TestCase):
     def test_checkout_command_raises_on_missing_remote(self):
         self.runtime.get_remote.return_value = None
 
-        with pytest.raises(AssertionError, match="Couldn't determine default remote"):
+        with self.assertRaises(AssertionError, msg="Couldn't find matching remote"):
             self.command("feature")
 
     def test_checkout_command_rejects_invalid_pull_url(self):
-        with pytest.raises(AssertionError, match="Invalid pull request URL"):
+        with self.assertRaises(ValueError, msg="Couldn't parse input. Must be"):
             self.command("https://github.com/octo/repo/issues/12")
