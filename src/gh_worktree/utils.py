@@ -1,4 +1,5 @@
 import os
+import random
 import shlex
 import subprocess
 from typing import List
@@ -30,7 +31,7 @@ def find_up(name: str, start_path: str):
 
 def stream_exec(command: List[str], wait_time: int = 60, cwd: str = None) -> int:
     """
-    Executes a command in a subprocess and stream's its output to stdout.
+    Executes a command in a subprocess and streams its output to stdout.
     :param command: The command to execute as a list of strings
     :param wait_time: The number of seconds to wait for the process to finish
     :param cwd: The working directory to execute the command in
@@ -61,3 +62,35 @@ def stream_exec(command: List[str], wait_time: int = 60, cwd: str = None) -> int
         process.wait(wait_time)
 
     return process.returncode
+
+
+def iter_output(command: List[str], wait_time: int = 60, cwd: str = None):
+    """
+    Executes a command in a subprocess and iterates its output after completion
+    :param command: The command to execute as a list of strings
+    :param wait_time: The number of seconds to wait for the process to finish
+    :param cwd: The working directory to execute the command in
+    """
+    output_color = random.choice(COLORS)
+    print(f"Executing: {output_color}{shlex.join(command)}{COLOR_RESET}")
+
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=wait_time,
+        cwd=cwd,
+    )
+
+    command_prefix = command[:2]
+    if os.path.exists(command_prefix[0]):
+        command_prefix[0] = os.path.basename(command_prefix[0])
+
+    for line in result.stdout.splitlines():
+        print(
+            f"{output_color}{shlex.join(command_prefix)} |{COLOR_RESET} {line}",
+            end="",
+            flush=True,
+        )
+        yield line
