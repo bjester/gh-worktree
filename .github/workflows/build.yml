@@ -19,20 +19,23 @@ jobs:
         run: uv python install
       - name: Build
         run: make build
-      - name: Add PR number
-        if: github.event_name == 'pull_request'
-        run: echo ${{ github.event.pull_request.number }} > dist/PR_NUMBER.txt
+      - name: Read the asset list
+        id: build-asset-list
+        run: |
+          cd dist/
+          echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
+          echo "PEX_NAME=$(ls *pex)" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v6
         id: artifact-whl-upload-step
         if: github.event_name == 'pull_request'
         with:
-          name: build_whl_${{ github.event.pull_request.number }}
+          name: ${{ env.WHL_NAME }}
           path: dist/*.whl
       - uses: actions/upload-artifact@v6
         id: artifact-pex-upload-step
         if: github.event_name == 'pull_request'
         with:
-          name: build_pex_${{ github.event.pull_request.number }}
+          name: ${{ env.PEX_NAME }}
           path: dist/*.pex
 
   comment-pr:
@@ -47,12 +50,10 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }}
-          path: dist
 
       - name: Read the asset list
         id: asset-list
         run: |
-          cd dist/
           echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
           echo "WHL_CHECKSUM=$(sha256sum *whl | cut -d '' -f 1)" >> $GITHUB_ENV
           echo "PEX_NAME=$(ls *pex)" >> $GITHUB_ENV
@@ -66,6 +67,6 @@ jobs:
 
             | File | Checksum |
             | --- | --- |
-            | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/${{ needs.build.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
-            | [${{ env.PEX_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/${{ needs.build.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
+            | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
+            | [${{ env.PEX_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
           comment-tag: build-assets
