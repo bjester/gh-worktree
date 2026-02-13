@@ -32,3 +32,19 @@ testpaths = ["tests"]
 [tool.flake8]
 max-line-length = 100
 max-complexity = 10
+
+[tool.uv.build-backend]
+source-exclude = [
+    ".envrc",
+    ".idea/",
+    ".git/",
+    "dist/"
+]
+wheel-exclude = [
+    ".github/",
+    ".gitignore/",
+    ".precommit-config.yaml",
+    ".venv/",
+    "Makefile",
+    "tests/"
+]
