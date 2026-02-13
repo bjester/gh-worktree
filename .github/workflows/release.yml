@@ -20,6 +20,8 @@ jobs:
         run: uv python install
       - name: Build
         run: make build
+      - name: Remove PEX
+        run: rm -f dist/*.pex
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
