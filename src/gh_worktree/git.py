@@ -1,9 +1,10 @@
 import re
 from collections import namedtuple
-import subprocess
-from typing import Union, Optional, List, Tuple
+from typing import List
+from typing import Optional
 
 from gh_worktree.context import Context
+from gh_worktree.utils import iter_output
 from gh_worktree.utils import stream_exec
 
 TYPE_RE = re.compile(r"\((.*)\)")
@@ -22,11 +23,23 @@ class GitCLI(object):
                 f"Command failed, with exit status {return_status}: git {' '.join(command)}"
             )
 
+    def _iter_output(self, *command: str):
+        for line in iter_output(["git", *command], cwd=self.context.cwd):
+            yield line
+
     def clone(self, src: str, destination_dir: str):
         self._stream_exec("clone", "--bare", src, destination_dir)
 
     def config(self, config_option: str, config_value: str):
         self._stream_exec("config", config_option, config_value)
+
+    def ls_tree(self, branch_name: str, file_path: str):
+        for line in self._iter_output("ls-tree", "-r", branch_name, "--", file_path):
+            yield line
+
+    def cat_file(self, branch_name: str, file_path: str):
+        for line in self._iter_output("cat-file", "-p", f"{branch_name}:{file_path}"):
+            yield line
 
     def fetch(self, remote: Optional[str] = "origin", refspec: Optional[str] = None):
         if refspec is not None:
@@ -35,15 +48,8 @@ class GitCLI(object):
             self._stream_exec("fetch", remote)
 
     def remote(self) -> List[GitRemote]:
-        result = subprocess.run(
-            ["git", "remote", "-v"],
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd=self.context.cwd,
-        )
         remotes = []
-        for line in result.stdout.splitlines():
+        for line in self._iter_output("remote", "-v"):
             name, uri_ref = line.split("\t")
             uri, remote_type = uri_ref.split(" ", 1)
             remotes.append(GitRemote(name, uri, re.sub(TYPE_RE, r"\1", remote_type)))

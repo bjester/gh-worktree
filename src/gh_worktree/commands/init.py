@@ -64,8 +64,17 @@ class InitCommand(Command):
     def __call__(self, repo: str, *destination_dir: Optional[str]):
         """
         Initialize a project for using gh-worktree with it, by cloning the project and configuring
-        it to be a bare git repo. This command creates a suitable structure for worktree directories
-        within the project directory.
+        it to be a bare git repo.
+
+        This command creates a suitable structure for worktree directories within the project
+        directory. It accepts various input formats, but it must be a GitHub repository, since this
+        uses `gh` to gather additional information about the project.
+
+        Examples:
+            gh-worktree init https://github.com/bjester/gh-worktree.git
+            gh-worktree init ssh@github.com:bjester/gh-worktree.git
+            gh-worktree init bjester/gh-worktree
+            gh-worktree init bjester/gh-worktree gh-worktree-second
 
         :param repo: The URI, or Github 'owner/repo', to clone
         :type repo: str
@@ -77,6 +86,11 @@ class InitCommand(Command):
         repo_target.validate()
 
         project_dir = os.path.join(self._context.cwd, repo_target.destination_dir)
+
+        if os.path.exists(project_dir):
+            # this would be problematic!
+            raise AssertionError(f"Project directory {project_dir} already exists")
+
         os.makedirs(project_dir, exist_ok=True)
 
         with self._context.use(project_dir):

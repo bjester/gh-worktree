@@ -10,6 +10,19 @@ class CreateCommand(Command):
     def __call__(self, worktree_name: str, *base_ref: Optional[str]):
         """
         Create a new worktree in the current project.
+
+        This will add a new directory to your project directory with the name provided to
+        `worktree_name`. By default, the worktree branch will be based off the default GitHub
+        repository branch. To base it off another branch, you may use specify it as the second
+        argument. If the branch you want to base off contains a slash (`branch/name`), you must also
+        specify prefix it with the remote name and a slash, e.g. `remote/branch/name`.
+
+        Examples:
+            gh-worktree create testing-create
+            gh-worktree create testing-create main
+            gh-worktree create testing-create upstream/main
+            gh-worktree create testing-create upstream/some/other/branch
+
         :param worktree_name: The name of the worktree
         :param base_ref: The base reference to create the worktree from
         """
