@@ -95,7 +95,15 @@ class CheckoutCommand(Command):
 
     def __call__(self, branch_or_pr: str, remote: Optional[str] = None):  # noqa: C901
         """
-        Checkout an existing branch or PR as a worktree
+        Checkout an existing branch or PR as a worktree.
+
+        This accepts a PR number which will be looked up on the GitHub repository the project was
+        initialized with. It will also accept a GitHub PR URL. Lastly, it will accept a branch
+        name, if the branch is already tracked in your local repository. You may specify a remote
+        to fetch the latest version of the branch with `--remote`, and that flag only works when
+        passing a branch name.
+
+        Examples:
             gh-worktree checkout 1234
             gh-worktree checkout https://github.com/octo/repo/pull/1234
             gh-worktree checkout my-local-branch
@@ -114,7 +122,7 @@ class CheckoutCommand(Command):
                 inpt.remote, f"pull/{inpt.pr_number}/head:{inpt.worktree_name}"
             )
         else:
-            # TODO: detect if it's local only
+            # TODO: is this good to detect if it's local only?
             try:
                 self._runtime.git.fetch(
                     inpt.remote, f"{inpt.worktree_name}:{inpt.worktree_name}"

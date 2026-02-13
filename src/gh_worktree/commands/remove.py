@@ -12,7 +12,15 @@ class RemoveCommand(Command):
 
     def __call__(self, worktree_name: str, force: bool = False):
         """
-        Remove a worktree from the current project that was added with `create` or `checkout`
+        Remove a worktree from the current project that was added with `create` or `checkout`.
+
+        If git detects the worktree has commits that are unmerged, then it will refuse to delete it.
+        You may use `--force` to passthrough `--force` to git and force the worktree's deletion.
+
+        Examples:
+            gh-worktree remove testing-create
+            gh-worktree remove testing-create --force
+
         :param worktree_name: The name of the worktree to remove
         :param force: Whether to force the removal of the worktree, if it's unmerged
         """
