@@ -1,5 +1,7 @@
-name: release.yml
+name: Release workflow
 on:
+  release:
+    types: [published]
 
 jobs:
   pypi-publish:
