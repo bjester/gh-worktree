@@ -9,7 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+      whl-artifact-id: ${{ steps.artifact-whl-upload-step.outputs.artifact-id }}
+      pex-artifact-id: ${{ steps.artifact-pex-upload-step.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -18,15 +19,24 @@ jobs:
         run: uv python install
       - name: Build
         run: make build
-      - name: Add PR number
-        if: github.event_name == 'pull_request'
-        run: echo ${{ github.event.pull_request.number }} > dist/PR_NUMBER.txt
+      - name: Read the asset list
+        id: build-asset-list
+        run: |
+          cd dist/
+          echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
+          echo "PEX_NAME=$(ls *pex)" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v6
-        id: artifact-upload-step
+        id: artifact-whl-upload-step
         if: github.event_name == 'pull_request'
         with:
-          name: build_${{ github.event.pull_request.number }}
-          path: dist
+          name: ${{ env.WHL_NAME }}
+          path: dist/*.whl
+      - uses: actions/upload-artifact@v6
+        id: artifact-pex-upload-step
+        if: github.event_name == 'pull_request'
+        with:
+          name: ${{ env.PEX_NAME }}
+          path: dist/*.pex
 
   comment-pr:
     runs-on: ubuntu-latest
@@ -39,14 +49,15 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v7
         with:
-          artifact-ids: ${{ needs.build.outputs.artifact-id }}
-          path: build_output
+          artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }}
 
       - name: Read the asset list
         id: asset-list
         run: |
-          echo "WHL_CHECKSUM='$(sha256sum build_output/*whl)'" >> $GITHUB_ENV
-          echo "PEX_CHECKSUM='$(sha256sum build_output/*pex)'" >> $GITHUB_ENV
+          echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
+          echo "WHL_CHECKSUM=$(sha256sum *whl | cut -d '' -f 1)" >> $GITHUB_ENV
+          echo "PEX_NAME=$(ls *pex)" >> $GITHUB_ENV
+          echo "PEX_CHECKSUM=$(sha256sum *pex | cut -d '' -f 1)" >> $GITHUB_ENV
 
       - name: Create PR comment with asset link
         uses: thollander/actions-comment-pull-request@v3
@@ -54,9 +65,8 @@ jobs:
           message: |
             🎉 **Build Assets are ready!**
 
-            You can download the artifacts from the [build run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
-            ```
-            ${{ env.WHL_CHECKSUM }}
-            ${{ env.PEX_CHECKSUM }}
-            ```
+            | File | Checksum |
+            | --- | --- |
+            | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
+            | [${{ env.PEX_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
           comment-tag: build-assets
