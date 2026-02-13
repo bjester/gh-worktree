@@ -90,7 +90,6 @@ def iter_output(command: List[str], wait_time: int = 60, cwd: str = None):
     for line in result.stdout.splitlines():
         print(
             f"{output_color}{shlex.join(command_prefix)} |{COLOR_RESET} {line}",
-            end="",
             flush=True,
         )
         yield line

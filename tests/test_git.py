@@ -1,30 +1,128 @@
-import subprocess
-from types import SimpleNamespace
+from unittest import mock
+from unittest import TestCase
 
-from gh_worktree.git import GitCLI, GitRemote
+from gh_worktree.git import GitCLI
+from gh_worktree.git import GitRemote
 
 
-def test_git_remote_parsing(monkeypatch):
-    context = SimpleNamespace(cwd="/tmp")
-    stdout = (
-        "origin\tgit@github.com:foo/bar.git (fetch)\n"
-        "origin\tgit@github.com:foo/bar.git (push)\n"
-    )
+class GitCLITestCase(TestCase):
+    def setUp(self):
+        self.context = mock.Mock(cwd="/test/tmp")
+        self.cli = GitCLI(self.context)
 
-    def fake_run(command, capture_output, text, check, cwd):
-        assert command == ["git", "remote", "-v"]
-        assert capture_output is True
-        assert text is True
-        assert check is True
-        assert cwd == "/tmp"
-        return SimpleNamespace(stdout=stdout)
+        stream_exec_patcher = mock.patch("gh_worktree.git.stream_exec")
+        self.mock_stream_exec = stream_exec_patcher.start()
+        self.addCleanup(stream_exec_patcher.stop)
+        self.mock_stream_exec.return_value = 0
 
-    monkeypatch.setattr(subprocess, "run", fake_run)
+        iter_output_patcher = mock.patch("gh_worktree.git.iter_output")
+        self.mock_iter_output = iter_output_patcher.start()
+        self.addCleanup(iter_output_patcher.stop)
 
-    cli = GitCLI(context)
-    remotes = cli.remote()
+    def test_stream_exec(self):
+        self.cli._stream_exec("foo", "bar")
+        self.mock_stream_exec.assert_called_once_with(
+            ["git", "foo", "bar"], cwd="/test/tmp"
+        )
 
-    assert remotes == [
-        GitRemote("origin", "git@github.com:foo/bar.git", "fetch"),
-        GitRemote("origin", "git@github.com:foo/bar.git", "push"),
-    ]
+    def test_stream_exec__fail(self):
+        self.mock_stream_exec.return_value = 1
+        with self.assertRaises(RuntimeError):
+            self.cli._stream_exec("foo", "bar")
+        self.mock_stream_exec.assert_called_once_with(
+            ["git", "foo", "bar"], cwd="/test/tmp"
+        )
+
+    def test_iter_output(self):
+        self.mock_iter_output.return_value = ["line1", "line2"]
+        lines = list(self.cli._iter_output("foo", "bar"))
+        self.mock_iter_output.assert_called_once_with(
+            ["git", "foo", "bar"], cwd="/test/tmp"
+        )
+        self.assertEqual(lines, ["line1", "line2"])
+
+    def test_clone(self):
+        self.cli.clone("src_uri", "dest_dir")
+        self.mock_stream_exec.assert_called_once_with(
+            ["git", "clone", "--bare", "src_uri", "dest_dir"], cwd="/test/tmp"
+        )
+
+    def test_config(self):
+        self.cli.config("user.name", "foo")
+        self.mock_stream_exec.assert_called_once_with(
+            ["git", "config", "user.name", "foo"], cwd="/test/tmp"
+        )
+
+    def test_ls_tree(self):
+        self.mock_iter_output.return_value = ["line1", "line2"]
+        lines = list(self.cli.ls_tree("main", "path/to/file"))
+        self.mock_iter_output.assert_called_once_with(
+            ["git", "ls-tree", "-r", "main", "--", "path/to/file"], cwd="/test/tmp"
+        )
+        self.assertEqual(lines, ["line1", "line2"])
+
+    def test_cat_file(self):
+        self.mock_iter_output.return_value = ["content"]
+        lines = list(self.cli.cat_file("main", "file.txt"))
+        self.mock_iter_output.assert_called_once_with(
+            ["git", "cat-file", "-p", "main:file.txt"], cwd="/test/tmp"
+        )
+        self.assertEqual(lines, ["content"])
+
+    def test_fetch(self):
+        self.cli.fetch()
+        self.mock_stream_exec.assert_called_with(
+            ["git", "fetch", "origin"], cwd="/test/tmp"
+        )
+
+        self.cli.fetch(remote="upstream", refspec="master")
+        self.mock_stream_exec.assert_called_with(
+            ["git", "fetch", "upstream", "master"], cwd="/test/tmp"
+        )
+
+    def test_remote(self):
+        self.mock_iter_output.return_value = [
+            "origin\thttps://github.com/foo/bar (fetch)",
+            "origin\thttps://github.com/foo/bar (push)",
+        ]
+        remotes = self.cli.remote()
+        self.mock_iter_output.assert_called_once_with(
+            ["git", "remote", "-v"], cwd="/test/tmp"
+        )
+        self.assertEqual(
+            remotes,
+            [
+                GitRemote("origin", "https://github.com/foo/bar", "fetch"),
+                GitRemote("origin", "https://github.com/foo/bar", "push"),
+            ],
+        )
+
+    def test_add_worktree(self):
+        self.cli.add_worktree("new-branch", "main")
+        self.mock_stream_exec.assert_called_once_with(
+            ["git", "worktree", "add", "-b", "new-branch", "--", "new-branch", "main"],
+            cwd="/test/tmp",
+        )
+
+    def test_open_worktree(self):
+        self.cli.open_worktree("existing-branch")
+        self.mock_stream_exec.assert_called_once_with(
+            ["git", "worktree", "add", "--", "existing-branch"], cwd="/test/tmp"
+        )
+
+    def test_open_worktree_validation(self):
+        with self.assertRaises(ValueError):
+            self.cli.open_worktree("../outside")
+        with self.assertRaises(ValueError):
+            self.cli.open_worktree("/absolute")
+
+    def test_remove_worktree(self):
+        self.cli.remove_worktree("old-tree")
+        self.mock_stream_exec.assert_called_with(
+            ["git", "worktree", "remove", "--", "old-tree"], cwd="/test/tmp"
+        )
+
+        self.cli.remove_worktree("old-tree", force=True)
+        self.mock_stream_exec.assert_called_with(
+            ["git", "worktree", "remove", "--force", "--", "old-tree"], cwd="/test/tmp"
+        )
