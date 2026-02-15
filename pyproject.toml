@@ -1,18 +1,38 @@
 [project]
 name = "gh-worktree"
-version = "0.1.0"
+version = "0.1.1"
 description = "github CLI extension for worktrees"
 readme = "README.md"
 authors = [
     { name = "Blaine Jester", email = "bjester@quavalent.com" }
 ]
+license = {file = "LICENSE"}
+keywords = ["git", "github", "worktree", "cli", "development"]
 requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Utilities",
+    "Typing :: Typed"
+]
 dependencies = [
     "fire>=0.7.1",
 ]
 
 [project.scripts]
 gh-worktree = "gh_worktree.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/bjester/gh-worktree"
+Repository = "https://github.com/bjester/gh-worktree"
+Issues = "https://github.com/bjester/gh-worktree/issues"
 
 [dependency-groups]
 dev = [

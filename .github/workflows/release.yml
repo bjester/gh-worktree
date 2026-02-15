@@ -12,6 +12,7 @@ jobs:
       url: https://pypi.org/p/gh-worktree
     permissions:
       id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -20,6 +21,10 @@ jobs:
         run: uv python install
       - name: Build
         run: make build
+      - name: Upload PEX to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/*.pex
       - name: Remove PEX
         run: rm -f dist/*.pex
       - name: Publish to PyPI

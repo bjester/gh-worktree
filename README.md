@@ -2,8 +2,31 @@
 
 A CLI tool that helps you manage Git worktrees. This was built as a GitHub CLI (`gh`) extension, but it can be used directly. Although it does rely on the following being available:
 - `git` (obviously)
-- `gh`
+- [`gh`](https://cli.github.com/)
 
+## Quick Start
+```bash
+pip install gh-worktree
+```
+Or
+```bash
+uvx gh-worktree
+```
+Or download the PEX file from the [releases page](https://github.com/bjester/gh-worktree/releases).
+
+## Overview
+
+### Features
+- Bare repository initialization
+- Lifecycle hooks with script checksum validation
+- Global and project configuration
+- Create worktrees from GitHub PRs
+- Terminal autocomplete (coming soon)
+- Worktree templates (coming soon)
+- Project hook initialization (coming soon)
+- Feature detection and hook bifurcation (planned)
+
+### Details
 When you use `gh-worktree` to initialize a repository for use with worktrees, it uses a bare repository approach, which creates a structure like the following, if you were to clone `gh-worktree`:
 ```
 gh-worktree/
@@ -59,7 +82,7 @@ Initializes the repository (e.g. `https://github.com/bjester/gh-worktree.git`) f
 ### Create
 **Spec: `create <worktree_name> [base_ref]`**
 
-Creates a new worktree, which by default will be based off the default branch of the Github repository that you initialized the project with using `init`.
+Creates a new worktree, which by default will be based off the default branch of the GitHub repository that you initialized the project with using `init`.
 
 ### Checkout
 **Spec: `checkout [--remote=<name>] <branch_name|pr_number|pr_url>`**
@@ -73,3 +96,9 @@ Removes a worktree. If git detects the worktree has commits that are unmerged, t
 
 ## Installation as `gh` extension
 TBD
+
+## AI Disclosure
+LLMs were used in the development of this project, mostly for brainstorming and bootstrapping code, particularly tests. The contribution proportion is roughly 80 / 20, human and AI code respectively.
+
+## License
+[MIT](LICENSE) :: Copyright 2026 Blaine Jester
