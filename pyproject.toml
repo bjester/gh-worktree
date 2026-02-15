@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Blaine Jester", email = "bjester@quavalent.com" }
 ]
-license = {text = "MIT"}
+license = {file = "LICENSE"}
 keywords = ["git", "github", "worktree", "cli", "development"]
 requires-python = ">=3.10"
 classifiers = [
