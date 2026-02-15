@@ -1,6 +1,7 @@
 import hashlib
 import os
 import stat
+from contextlib import contextmanager
 from enum import Enum
 
 from gh_worktree.context import Context
@@ -16,6 +17,14 @@ class Hook(Enum):
     post_create = 6
     pre_remove = 7
     post_remove = 8
+
+    @property
+    def git_path(self):
+        return f".gh/worktree/hooks/{self.name}"
+
+
+class HookExists(Exception):
+    pass
 
 
 class Hooks(object):
@@ -38,15 +47,8 @@ class Hooks(object):
 
             # Ensure the hook file is executable
             if not os.access(hook_file, os.X_OK):
-                # Try to make it executable if it's owned by the user
-                try:
-                    st = os.stat(hook_file)
-                    os.chmod(hook_file, st.st_mode | stat.S_IEXEC)
-                except OSError:
-                    print(
-                        f"Hook {hook_file} is not executable and could not be made executable. Skipping."
-                    )
-                    continue
+                print(f"Hook {hook_file} is not executable. Skipping.")
+                continue
 
             if not self._check_allowed(hook_file):
                 print(f"Hook {hook_file} is not allowed to run. Skipping.")
@@ -79,3 +81,19 @@ class Hooks(object):
             return True
 
         return False
+
+    @contextmanager
+    def add(self, hook: Hook):
+        hooks_dir = os.path.join(self.context.config_dir, "hooks")
+        hook_file = os.path.join(hooks_dir, hook.name)
+        os.makedirs(hooks_dir, exist_ok=True)
+
+        if os.path.exists(hook_file):
+            raise HookExists(f"Hook {hook_file} already exists.")
+
+        # copy it to config
+        with open(hook_file, "w", newline="\n") as f:
+            yield f
+
+        # allow exec
+        os.chmod(hook_file, os.stat(hook_file).st_mode | stat.S_IEXEC)

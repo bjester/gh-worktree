@@ -6,6 +6,8 @@ from urllib import parse
 from gh_worktree.command import Command
 from gh_worktree.config import RepositoryConfig
 from gh_worktree.hooks import Hook
+from gh_worktree.hooks import HookExists
+
 
 JUST_PATH_RE = re.compile(r"^[\w\-_]+/[\w\-_]+$")
 GIT_EXT_RE = re.compile(r"\.git$")
@@ -97,7 +99,7 @@ class InitCommand(Command):
             self._runtime.hooks.fire(
                 Hook.pre_init,
                 repo_target.uri,
-                repo_target.destination_dir,
+                project_dir,
                 skip_project=True,
             )
             self._runtime.git.clone(repo_target.uri, ".bare")
@@ -123,9 +125,27 @@ class InitCommand(Command):
             with open(os.path.join(self._context.config_dir, "config.json"), "w") as f:
                 config.save(f)
 
-        self._runtime.hooks.fire(
-            Hook.post_init,
-            repo_target.uri,
-            repo_target.destination_dir,
-            skip_project=True,
-        )
+            self._add_hooks(config)
+
+            self._runtime.hooks.fire(
+                Hook.post_init,
+                repo_target.uri,
+                project_dir,
+            )
+
+    def _add_hooks(self, config):
+        """Checks whether the repo has hooks in the default branch and copies them"""
+        for hook in Hook:
+            # check to see if repo has a hook
+            if not any(self._runtime.git.ls_tree(config.default_branch, hook.git_path)):
+                continue
+
+            # copy it
+            try:
+                with self._runtime.hooks.add(hook) as f:
+                    for line in self._runtime.git.cat_file(
+                        config.default_branch, hook.git_path
+                    ):
+                        f.write(f"{line}\n")
+            except HookExists as e:
+                print(f"{str(e)} Skipping")
