@@ -25,3 +25,8 @@ repos:
         additional_dependencies: [
           'click>=8.0.4'
         ]
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.10.2
+    hooks:
+      - id: uv-lock
