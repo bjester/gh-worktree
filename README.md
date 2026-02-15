@@ -5,11 +5,11 @@ A CLI tool that helps you manage Git worktrees. This was built as a GitHub CLI (
 - [`gh`](https://cli.github.com/)
 
 ## Quick Start
-```
+```bash
 pip install gh-worktree
 ```
 Or
-```
+```bash
 uvx gh-worktree
 ```
 Or download the PEX file from the [releases page](https://github.com/bjester/gh-worktree/releases).
@@ -20,7 +20,7 @@ Or download the PEX file from the [releases page](https://github.com/bjester/gh-
 - Bare repository initialization
 - Lifecycle hooks with script checksum validation
 - Global and project configuration
-- Create worktrees from Github PRs
+- Create worktrees from GitHub PRs
 - Terminal autocomplete (coming soon)
 - Worktree templates (coming soon)
 - Project hook initialization (coming soon)
@@ -82,7 +82,7 @@ Initializes the repository (e.g. `https://github.com/bjester/gh-worktree.git`) f
 ### Create
 **Spec: `create <worktree_name> [base_ref]`**
 
-Creates a new worktree, which by default will be based off the default branch of the Github repository that you initialized the project with using `init`.
+Creates a new worktree, which by default will be based off the default branch of the GitHub repository that you initialized the project with using `init`.
 
 ### Checkout
 **Spec: `checkout [--remote=<name>] <branch_name|pr_number|pr_url>`**
