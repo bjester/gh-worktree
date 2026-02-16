@@ -45,7 +45,7 @@ class Templates(ConfigOperator):
         print(f"Copying template {relative_path}")
         with absolute_path.open("r", encoding="utf-8") as src:
             with dest_path.open("w", encoding="utf-8") as dest:
-                for line in src.readlines():
-                    dest.write(Template(line).safe_substitute(self.replacement_map))
+                content = src.read()
+                dest.write(Template(content).safe_substitute(self.replacement_map))
 
         dest_path.chmod(absolute_path.stat().st_mode)
