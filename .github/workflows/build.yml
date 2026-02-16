@@ -58,16 +58,16 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v7
         with:
-          artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }}
+          artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }},${{ needs.build.outputs.exe-artifact-id }}
 
       - name: Read the asset list
         id: asset-list
         run: |
           set -eo pipefail
           echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
-          echo "WHL_CHECKSUM=$(sha256sum *whl | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "PEX_CHECKSUM=$(sha256sum gh-worktree.pex | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "EXE_CHECKSUM=$(sha256sum gh-worktree | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "WHL_CHECKSUM=$(find ./ -name '*whl' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "PEX_CHECKSUM=$(find ./ -name 'gh-worktree.pex' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "EXE_CHECKSUM=$(find ./ -name 'gh-worktree' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
 
       - name: Create PR comment with asset link
         uses: thollander/actions-comment-pull-request@v3
