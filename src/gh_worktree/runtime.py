@@ -5,16 +5,18 @@ from gh_worktree.gh import GithubCLI
 from gh_worktree.git import GitCLI
 from gh_worktree.git import GitRemote
 from gh_worktree.hooks import Hooks
+from gh_worktree.templates import Templates
 
 
 class Runtime(object):
-    __slots__ = ("context", "hooks", "git", "gh")
+    __slots__ = ("context", "hooks", "git", "gh", "templates")
 
     def __init__(self):
         self.context = Context()
         self.hooks = Hooks(self.context)
         self.git = GitCLI(self.context)
         self.gh = GithubCLI(self.context)
+        self.templates = Templates(self.context)
 
     def get_default_remote(self) -> Optional[GitRemote]:
         return self.get_remote(owner_name=self.context.get_config().owner)

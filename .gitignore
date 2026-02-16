@@ -13,6 +13,7 @@ wheels/
 # IDE
 .idea/
 /*.iml
+.aiassistant/
 
 # Testing
 playground/

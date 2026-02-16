@@ -37,71 +37,77 @@ class CheckoutCommandTestCase(TestCase):
         self.hooks = SimpleNamespace(fire=Mock())
         self.git = SimpleNamespace(open_worktree=Mock(), fetch=Mock())
         self.gh = SimpleNamespace(pr_status=Mock())
+        self.templates = SimpleNamespace(copy=Mock())
         self.runtime = SimpleNamespace(
             context=self.context,
             hooks=self.hooks,
             git=self.git,
             gh=self.gh,
+            templates=self.templates,
             get_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
             get_default_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
         )
         self.command = CheckoutCommand(self.runtime)
 
-    def test_checkout_command_uses_branch_name(self):
+    def test_call__uses_branch_name(self):
         self.command("feature")
 
-        assert self.context.assert_called is True
+        self.assertTrue(self.context.assert_called)
 
         self.git.fetch.assert_called_once_with("origin", "feature:feature")
         self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
+        self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
 
-    def test_checkout_command_uses_remote_and_branch_name(self):
+    def test_call__uses_remote_and_branch_name(self):
         self.command("feature", remote="aremote")
 
-        assert self.context.assert_called is True
+        self.assertTrue(self.context.assert_called)
 
         self.git.fetch.assert_called_once_with("aremote", "feature:feature")
         self.git.open_worktree.assert_called_once_with("feature")
+        self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
 
-    def test_checkout_command_uses_pr_number(self):
+    def test_call__uses_pr_number(self):
         self.gh.pr_status.return_value = {
             "headRefName": "feature",
         }
 
         self.command("1234")
 
-        assert self.context.assert_called is True
+        self.assertTrue(self.context.assert_called)
         self.gh.pr_status.assert_called_once_with("1234", owner_repo="octo/repo")
         self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
+        self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
 
-    def test_checkout_command_uses_pr_url(self):
+    def test_call__uses_pr_url(self):
         self.gh.pr_status.return_value = {
             "headRefName": "feature",
         }
 
         self.command("https://github.com/octo/repo/pull/1234")
 
-        assert self.context.assert_called is True
+        self.assertTrue(self.context.assert_called)
         self.gh.pr_status.assert_called_once_with("1234", owner_repo="octo/repo")
         self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
+        self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
         self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
 
-    def test_checkout_command_raises_on_missing_remote(self):
+    def test_call__raises_on_missing_remote(self):
         self.runtime.get_remote.return_value = None
 
         with self.assertRaises(AssertionError, msg="Couldn't find matching remote"):
             self.command("feature")
 
-    def test_checkout_command_rejects_invalid_pull_url(self):
+    def test_call__rejects_invalid_pull_url(self):
         with self.assertRaises(ValueError, msg="Couldn't parse input. Must be"):
             self.command("https://github.com/octo/repo/issues/12")

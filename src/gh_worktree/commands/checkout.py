@@ -138,6 +138,7 @@ class CheckoutCommand(Command):
                 f"{inpt.remote}/{inpt.worktree_name}",
             )
             self._runtime.git.open_worktree(inpt.worktree_name)
+            self._runtime.templates.copy(inpt.worktree_name)
             self._runtime.hooks.fire(
                 Hook.post_checkout,
                 inpt.worktree_name,

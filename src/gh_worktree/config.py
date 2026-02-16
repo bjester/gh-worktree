@@ -1,5 +1,6 @@
 import json
 from typing import Dict
+from typing import List
 
 
 class Config(object):
@@ -30,6 +31,10 @@ class GlobalConfig(Config):
     @property
     def allowed_hooks(self) -> Dict[str, str]:
         return self._data.get("allowed_hooks", {})
+
+    @property
+    def allowed_envvars(self) -> List[str]:
+        return self._data.get("allowed_envvars", [])
 
     def allow_hook(self, path: str, checksum: str):
         hooks = self.allowed_hooks.copy()
