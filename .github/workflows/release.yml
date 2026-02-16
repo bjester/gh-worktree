@@ -25,8 +25,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/*.pex
-      - name: Remove PEX
-        run: rm -f dist/*.pex
+      - name: Upload Binary to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/gh-worktree
+      - name: Remove PEX and Binary
+        run: rm -f dist/*.pex dist/gh-worktree
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

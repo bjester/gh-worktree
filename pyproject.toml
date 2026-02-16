@@ -1,6 +1,6 @@
 [project]
 name = "gh-worktree"
-version = "0.2.0"
+version = "0.2.1"
 description = "github CLI extension for worktrees"
 readme = "README.md"
 authors = [
@@ -38,7 +38,8 @@ Issues = "https://github.com/bjester/gh-worktree/issues"
 dev = [
     "pytest>=8.0.0",
     "exceptiongroup; python_version < '3.11'",
-    "pre-commit"
+    "pre-commit",
+    "pyinstaller"
 ]
 
 [build-system]
