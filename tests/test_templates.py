@@ -36,7 +36,7 @@ class TemplatesTestCase(unittest.TestCase):
         self.global_dir = self.tmp_path / "global"
         self.project_dir = self.tmp_path / "project"
         self.global_templates_dir = self.global_dir / "templates"
-        self.project_templates_dir = self.project_dir / ".gh-worktree" / "templates"
+        self.project_templates_dir = self.project_dir / ".gh" / "worktree" / "templates"
 
         self.global_templates_dir.mkdir(parents=True)
         self.project_templates_dir.mkdir(parents=True)
@@ -71,7 +71,7 @@ class TemplatesTestCase(unittest.TestCase):
             self.project_dir,
             self.config,
             self.global_config,
-            self.project_dir / ".gh-worktree",
+            self.project_dir / ".gh" / "worktree",
             self.global_dir,
         )
 
@@ -160,7 +160,7 @@ class TemplatesTestCase(unittest.TestCase):
             empty_project,
             self.config,
             self.global_config,
-            empty_project / ".gh-worktree",
+            empty_project / ".gh" / "worktree",
             self.tmp_path / "empty_global",
         )
         templates = Templates(context)

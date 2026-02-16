@@ -57,7 +57,9 @@ max-complexity = 10
 source-exclude = [
     ".envrc",
     ".idea/",
+    ".gh/",
     ".git/",
+    "playground/",
     "dist/"
 ]
 wheel-exclude = [
