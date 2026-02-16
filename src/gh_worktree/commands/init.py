@@ -159,7 +159,7 @@ class InitCommand(Command):
         for template_ls in self._runtime.git.ls_tree(
             config.default_branch, ".gh/worktree/templates"
         ):
-            template_file = template_ls.split("\t")[1]
+            template_file = template_ls.split("\t")[1].strip('"')
             # copy it
             try:
                 with self._runtime.templates.add(template_file) as f:

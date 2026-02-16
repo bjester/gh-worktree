@@ -64,5 +64,5 @@ class Templates(ConfigOperator):
             raise TemplateExists(f"Template {relative_path} already exists.")
 
         # copy it to config
-        with template_file.open("w", encoding="utf-8", newline="\n") as f:
+        with template_file.open("w", encoding="utf-8") as f:
             yield f
