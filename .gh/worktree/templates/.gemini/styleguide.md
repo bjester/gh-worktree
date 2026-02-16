@@ -18,7 +18,7 @@ This style guide outlines the coding conventions for the project `gh-worktree`. 
 * **Use 4 spaces per indentation level.** (PEP 8 recommendation)
 
 ## Imports
-* **Group imports:** Do not use group imports.
+* **Multiple imports per line:** Do not import multiple modules on a single line (e.g., use separate import statements).
 * **Absolute imports:** Always use absolute imports for clarity.
 
 ## Naming Conventions
