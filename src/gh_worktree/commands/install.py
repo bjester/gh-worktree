@@ -60,13 +60,22 @@ class InstallCommand(Command):
             )
 
         if path_bin:
-            target_path = Path("~/").expanduser() / ".local"
-            while str(target_path / "bin") not in os.getenv("PATH", ""):
-                if target_path == target_path.parent:
-                    print("Could not find suitable directory in path")
-                    return
-                target_path = target_path.parent
-            target_paths.append(target_path / "bin" / target_name)
+            path_dirs = os.getenv("PATH", "").split(os.pathsep)
+            # Common user bin directories
+            preferred_install_dirs = [
+                Path.home() / ".local" / "bin",
+                Path.home() / "bin",
+            ]
+
+            install_dir = next(
+                (d for d in preferred_install_dirs if str(d) in path_dirs), None
+            )
+
+            if not install_dir:
+                print("Could not find a suitable user binary directory in your PATH.")
+                sys.exit(1)
+
+            target_paths.append(install_dir / target_name)
 
         self._run(current_script_path, target_paths, should_link, force)
 
@@ -78,14 +87,18 @@ class InstallCommand(Command):
         force: bool,
     ):
         for target_path in target_paths:
-            if target_path.exists() and not force:
-                print(f"Path already exists, use --force to overwrite: {target_path}")
-                sys.exit(1)
+            if target_path.exists() or target_path.is_symlink():
+                if not force:
+                    print(
+                        f"Path already exists, use --force to overwrite: {target_path}"
+                    )
+                    sys.exit(1)
+                target_path.unlink(True)
 
             target_path.parent.mkdir(parents=True, exist_ok=True)
 
             if should_link:
-                os.link(current_script_path, target_path)
+                os.symlink(current_script_path, target_path)
             else:
                 shutil.copy(current_script_path, target_path)
                 target_path.chmod(target_path.stat().st_mode | stat.S_IEXEC)
