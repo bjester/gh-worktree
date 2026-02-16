@@ -21,9 +21,9 @@ Or download the PEX file from the [releases page](https://github.com/bjester/gh-
 - Lifecycle hooks with script checksum validation
 - Global and project configuration
 - Create worktrees from GitHub PRs
+- Project hook and template initialization
 - Worktree templates
 - Terminal autocomplete (coming soon)
-- Project hook initialization (coming soon)
 - Feature detection and hook bifurcation (planned)
 
 ### Details
@@ -46,6 +46,7 @@ gh-worktree/
     README.md
     # ... etc ...
 ```
+When you initialize a new project, if `gh-worktree` detects that `.gh/worktree` exists in the main branch of the repo, it will copy any hooks and/or templates from there to the project repo directory. This project has templates which would get copied if you use `gh-worktree` with it.
 
 ### Hooks
 You may add hooks to `.gh/worktree/hooks` so that you may trigger custom functionality during the lifecycle of your worktrees. The hooks are configurable in the project, but also globally. The first global `.gh/worktree/hooks` found upwards in the directory tree, outside the project directory (i.e. above `gh-worktree/`), will be executed. The following hooks are available:

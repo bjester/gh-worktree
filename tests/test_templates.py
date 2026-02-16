@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from gh_worktree.templates import TemplateExists
 from gh_worktree.templates import Templates
 
 
@@ -205,3 +206,28 @@ class TemplatesTestCase(unittest.TestCase):
         templates.copy("my-worktree")
 
         self.assertTrue((worktree_dir / "subdir").is_dir())
+
+    def test_add__creates_file(self):
+        context = self._create_context()
+        templates = Templates(context)
+
+        relative_path = ".gh/worktree/templates/example.txt"
+        with templates.add(relative_path) as f:
+            f.write("hello")
+
+        template_file = self.project_dir / relative_path
+        self.assertTrue(template_file.exists())
+        self.assertEqual(template_file.read_text(), "hello")
+
+    def test_add__raises_when_existing(self):
+        context = self._create_context()
+        templates = Templates(context)
+
+        relative_path = ".gh/worktree/templates/example.txt"
+        template_file = self.project_dir / relative_path
+        template_file.parent.mkdir(parents=True, exist_ok=True)
+        template_file.write_text("existing")
+
+        with self.assertRaisesRegex(TemplateExists, "Template .* already exists"):
+            with templates.add(relative_path) as f:
+                f.write("new")
