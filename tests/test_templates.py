@@ -167,10 +167,12 @@ class TemplatesTestCase(unittest.TestCase):
         )
         templates = Templates(context)
 
+        worktree_dir = empty_project / "my-worktree"
+        worktree_dir.mkdir(parents=True)
+
         templates.copy("my-worktree")
 
-        worktree_dir = empty_project / "my-worktree"
-        self.assertFalse(worktree_dir.exists())
+        self.assertEqual(len(list(worktree_dir.iterdir())), 0)
 
     def test_copy__handles_undefined_variables_with_safe_substitute(self):
         """Test that copy uses safe_substitute to handle missing variables."""
