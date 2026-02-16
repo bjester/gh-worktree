@@ -50,6 +50,7 @@ class CreateCommand(Command):
             self._runtime.git.add_worktree(
                 worktree_name, f"{git_remote_name}/{base_ref}"
             )
+            self._runtime.templates.copy(worktree_name)
             self._runtime.hooks.fire(
                 Hook.post_create, worktree_name, f"{git_remote_name}/{base_ref}"
             )

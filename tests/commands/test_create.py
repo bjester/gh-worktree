@@ -28,10 +28,12 @@ def test_create_command_uses_default_branch_and_remote():
     context = StubContext("/repo", SimpleNamespace(default_branch="main"))
     hooks = SimpleNamespace(fire=Mock())
     git = SimpleNamespace(fetch=Mock(), add_worktree=Mock())
+    templates = SimpleNamespace(copy=Mock())
     runtime = SimpleNamespace(
         context=context,
         hooks=hooks,
         git=git,
+        templates=templates,
         get_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
     )
 
@@ -42,6 +44,7 @@ def test_create_command_uses_default_branch_and_remote():
     runtime.get_remote.assert_called_once_with()
     git.fetch.assert_called_once_with("origin")
     git.add_worktree.assert_called_once_with("feature", "origin/main")
+    templates.copy.assert_called_once_with("feature")
     hooks.fire.assert_any_call(Hook.pre_create, "feature", "origin/main")
     hooks.fire.assert_any_call(Hook.post_create, "feature", "origin/main")
 
@@ -50,10 +53,12 @@ def test_create_command_respects_explicit_remote_and_ref():
     context = StubContext("/repo", SimpleNamespace(default_branch="main"))
     hooks = SimpleNamespace(fire=Mock())
     git = SimpleNamespace(fetch=Mock(), add_worktree=Mock())
+    templates = SimpleNamespace(copy=Mock())
     runtime = SimpleNamespace(
         context=context,
         hooks=hooks,
         git=git,
+        templates=templates,
         get_remote=Mock(),
     )
 
@@ -63,5 +68,6 @@ def test_create_command_respects_explicit_remote_and_ref():
     runtime.get_remote.assert_not_called()
     git.fetch.assert_called_once_with("upstream")
     git.add_worktree.assert_called_once_with("feature", "upstream/dev")
+    templates.copy.assert_called_once_with("feature")
     hooks.fire.assert_any_call(Hook.pre_create, "feature", "upstream/dev")
     hooks.fire.assert_any_call(Hook.post_create, "feature", "upstream/dev")

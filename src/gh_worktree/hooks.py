@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from enum import Enum
 
 from gh_worktree.context import Context
+from gh_worktree.operator import ConfigOperator
 from gh_worktree.utils import stream_exec
 
 
@@ -27,20 +28,15 @@ class HookExists(Exception):
     pass
 
 
-class Hooks(object):
+class Hooks(ConfigOperator):
     def __init__(self, context: Context):
-        self.context = context
+        super().__init__(context)
+        self.dir_name = "hooks"
 
     def fire(self, hook: Hook, *args, skip_project: bool = False) -> bool:
         fired = False
-        configs = [self.context.global_config_dir]
-        if not skip_project:
-            configs.append(self.context.config_dir)
 
-        for config_dir in configs:
-            hooks_dir = os.path.join(config_dir, "hooks")
-            if not os.path.exists(hooks_dir):
-                continue
+        for hooks_dir in self.iter_config_dirs(skip_project=skip_project):
             hook_file = os.path.join(hooks_dir, hook.name)
             if not os.path.exists(hook_file):
                 continue
