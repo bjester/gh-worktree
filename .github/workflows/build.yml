@@ -11,6 +11,7 @@ jobs:
     outputs:
       whl-artifact-id: ${{ steps.artifact-whl-upload-step.outputs.artifact-id }}
       pex-artifact-id: ${{ steps.artifact-pex-upload-step.outputs.artifact-id }}
+      exe-artifact-id: ${{ steps.artifact-exe-upload-step.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -22,9 +23,11 @@ jobs:
       - name: Read the asset list
         id: build-asset-list
         run: |
+          set -eo pipefail
           cd dist/
           echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
-          echo "PEX_NAME=$(ls *pex)" >> $GITHUB_ENV
+          echo "PEX_NAME=$(ls gh-worktree.pex)" >> $GITHUB_ENV
+          echo "EXE_NAME=$(ls gh-worktree)" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v6
         id: artifact-whl-upload-step
         if: github.event_name == 'pull_request'
@@ -36,7 +39,13 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           name: ${{ env.PEX_NAME }}
-          path: dist/*.pex
+          path: dist/gh-worktree.pex
+      - uses: actions/upload-artifact@v6
+        id: artifact-exe-upload-step
+        if: github.event_name == 'pull_request'
+        with:
+          name: ${{ env.EXE_NAME }}
+          path: dist/gh-worktree
 
   comment-pr:
     runs-on: ubuntu-latest
@@ -49,15 +58,16 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v7
         with:
-          artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }}
+          artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }},${{ needs.build.outputs.exe-artifact-id }}
 
       - name: Read the asset list
         id: asset-list
         run: |
+          set -eo pipefail
           echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
-          echo "WHL_CHECKSUM=$(sha256sum *whl | cut -d '' -f 1)" >> $GITHUB_ENV
-          echo "PEX_NAME=$(ls *pex)" >> $GITHUB_ENV
-          echo "PEX_CHECKSUM=$(sha256sum *pex | cut -d '' -f 1)" >> $GITHUB_ENV
+          echo "WHL_CHECKSUM=$(find ./ -name '*whl' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "PEX_CHECKSUM=$(find ./ -name 'gh-worktree.pex' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          echo "EXE_CHECKSUM=$(find ./ -name 'gh-worktree' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
 
       - name: Create PR comment with asset link
         uses: thollander/actions-comment-pull-request@v3
@@ -65,8 +75,9 @@ jobs:
           message: |
             🎉 **Build Assets are ready!**
 
-            | File | Checksum |
-            | --- | --- |
-            | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
-            | [${{ env.PEX_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
+            | Type | File | Checksum |
+            | --- | --- | --- |
+            | Wheel | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
+            | PEX | [gh-worktree.pex](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
+            | Binary | [gh-worktree](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.exe-artifact-id }}) | `${{ env.EXE_CHECKSUM }}` |
           comment-tag: build-assets

@@ -3,6 +3,7 @@ from gh_worktree.command import Command
 from gh_worktree.commands.checkout import CheckoutCommand
 from gh_worktree.commands.create import CreateCommand
 from gh_worktree.commands.init import InitCommand
+from gh_worktree.commands.install import InstallCommand
 from gh_worktree.commands.remove import RemoveCommand
 from gh_worktree.runtime import Runtime
 
@@ -21,6 +22,7 @@ class WorktreeCommands(Command):
         self._add(CreateCommand(self._runtime))
         self._add(CheckoutCommand(self._runtime))
         self._add(InitCommand(self._runtime))
+        self._add(InstallCommand(self._runtime))
         self._add(RemoveCommand(self._runtime))
 
     def _add(self, command: Command):
