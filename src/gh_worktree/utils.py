@@ -31,6 +31,20 @@ def find_up(name: str, start_path: Union[str, Path]) -> Path:
     raise RuntimeError(f"Could not find {name} in {start_path} ancestors")
 
 
+def _log_prefix(command: List[str]) -> str:
+    """
+    Returns a prefix string for visibility, via logging, into the command being executed
+    :param command: The command list to be executed
+    :return: A string for prefixing log messages
+    """
+    command_prefix = command[:2]
+    command_script_path = Path(command_prefix[0])
+    if command_script_path.exists():
+        command_prefix[0] = command_script_path.name
+
+    return shlex.join(command_prefix)
+
+
 def stream_exec(
     command: List[str], wait_time: int = 60, cwd: Optional[Union[str, Path]] = None
 ) -> int:
@@ -52,13 +66,9 @@ def stream_exec(
         output_color = COLORS[process.pid % len(COLORS)]
         print(f"Executing: {output_color}{shlex.join(command)}{COLOR_RESET}")
 
-        command_prefix = command[:2]
-        if Path(command_prefix[0]).exists():
-            command_prefix[0] = Path(command_prefix[0]).name
-
         for line in process.stdout:
             print(
-                f"{output_color}{shlex.join(command_prefix)} |{COLOR_RESET} {line}",
+                f"{output_color}{_log_prefix(command)} |{COLOR_RESET} {line}",
                 end="",
                 flush=True,
             )
@@ -89,13 +99,9 @@ def iter_output(
         cwd=cwd,
     )
 
-    command_prefix = command[:2]
-    if Path(command_prefix[0]).exists():
-        command_prefix[0] = Path(command_prefix[0]).name
-
     for line in result.stdout.splitlines():
         print(
-            f"{output_color}{shlex.join(command_prefix)} |{COLOR_RESET} {line}",
+            f"{output_color}{_log_prefix(command)} |{COLOR_RESET} {line}",
             flush=True,
         )
         yield line
