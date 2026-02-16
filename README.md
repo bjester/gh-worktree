@@ -14,6 +14,8 @@ uvx gh-worktree
 ```
 Or download the PEX file from the [releases page](https://github.com/bjester/gh-worktree/releases).
 
+View my recipes for hooks and templates [here](https://github.com/bjester/gh-worktree-recipes).
+
 ## Overview
 
 ### Features
