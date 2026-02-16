@@ -106,8 +106,39 @@ Similar to how `gh` lets you quickly checkout PRs, this command allows you to qu
 
 Removes a worktree. If git detects the worktree has commits that are unmerged, then it will refuse to delete it. You may use `--force` to passthrough `--force` to git and force the worktree's deletion.
 
-## Installation as `gh` extension
-TBD
+## Installation
+Most GitHub extensions are precompiled Go or Node.js executables, but you can use this standalone. `gh-worktree` has only been tested on Linux so far. If you have python 3.10+ installed, the PEX file is a great option.
+
+### As a GitHub CLI extension (`gh`)
+The following will copy the binary to `~/.local/share/gh/extensions/gh-worktree/gh-worktree`. You can also use the PEX file, just remove the extension before step 3.
+1. Download the [latest release's](https://github.com/bjester/gh-worktree/releases) binary file.
+2. Ensure it's executable: `chmod +x gh-worktree`
+3. Execute the following: `./gh-worktree install --gh-ext`
+4. Test it: `gh worktree`
+
+### Standalone
+1. Download the [latest release's](https://github.com/bjester/gh-worktree/releases) binary or PEX file.
+2. Ensure it's executable: `chmod +x gh-worktree*`
+3. Execute the following: `./gh-worktree install --path-bin` or `./gh-worktree.pex install --path-bin`
+4. Test it: `gh-worktree version`
+
+### Aliasing
+Use the `--alias` flag to change the name for either of the above options:
+```bash
+./gh-worktree install --alias=wktr --path-bin
+wktr version
+```
+
+### From source
+```bash
+git clone https://github.com/bjester/gh-worktree.git
+cd gh-worktree
+uv venv
+source .venv/bin/activate
+uv sync --group dev
+make dist/gh-worktree
+./dist/gh-worktree install --path-bin
+```
 
 ## AI Disclosure
 LLMs were used in the development of this project, mostly for brainstorming and bootstrapping code, particularly tests. The contribution proportion is roughly 80 / 20, human and AI code respectively.
