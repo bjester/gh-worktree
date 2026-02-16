@@ -1,13 +1,17 @@
+import tempfile
+from pathlib import Path
 from unittest import TestCase
 
-import pytest
 from gh_worktree.utils import find_up
 
 
-class TestFindUp(TestCase):
-    @pytest.fixture(autouse=True)
-    def prepare_fixture(self, tmp_path):
-        self.tmp_path = tmp_path
+class FindUpTestCase(TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = Path(self.tmp_dir.name)
+
+    def tearDown(self):
+        self.tmp_dir.cleanup()
 
     def test_find_up_success(self):
         # Create a directory structure:
@@ -23,12 +27,12 @@ class TestFindUp(TestCase):
         subsubdir.mkdir()
 
         # Test finding from subsubdir
-        found_path = find_up("target_file", str(subsubdir))
-        assert found_path == str(root / "target_file")
+        found_path = find_up("target_file", subsubdir)
+        self.assertEqual(found_path, root / "target_file")
 
         # Test finding from root
-        found_path = find_up("target_file", str(root))
-        assert found_path == str(root / "target_file")
+        found_path = find_up("target_file", root)
+        self.assertEqual(found_path, root / "target_file")
 
     def test_find_up_failure(self):
         # Create a directory structure without the target file
@@ -36,5 +40,5 @@ class TestFindUp(TestCase):
         subdir = root / "subdir"
         subdir.mkdir()
 
-        with pytest.raises(RuntimeError, match="Could not find non_existent_file"):
-            find_up("non_existent_file", str(subdir))
+        with self.assertRaisesRegex(RuntimeError, "Could not find non_existent_file"):
+            find_up("non_existent_file", subdir)

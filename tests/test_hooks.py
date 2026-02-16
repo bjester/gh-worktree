@@ -1,12 +1,11 @@
-import glob
 import hashlib
 import os
-import shutil
 import stat
+import tempfile
+from pathlib import Path
 from unittest import mock
 from unittest import TestCase
 
-import pytest
 from gh_worktree.context import Context
 from gh_worktree.hooks import Hook
 from gh_worktree.hooks import HookExists
@@ -14,23 +13,20 @@ from gh_worktree.hooks import Hooks
 
 
 class HooksTestCase(TestCase):
-    @pytest.fixture(autouse=True)
-    def prepare_fixture(self, tmp_path):
-        self.tmp_path = tmp_path
-
     def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = Path(self.tmp_dir.name)
         self.context = Context()
-        self.context.cwd = str(self.tmp_path)
+        self.context.cwd = self.tmp_path
         self.hooks_path = self.tmp_path / ".gh" / "worktree" / "hooks"
-        os.makedirs(self.tmp_path / ".bare")
-        os.makedirs(self.context.config_dir)
+        (self.tmp_path / ".bare").mkdir()
+        self.context.config_dir.mkdir(parents=True, exist_ok=True)
         self.hooks_path.mkdir()
 
         self.hooks = Hooks(self.context)
 
     def tearDown(self):
-        for file_path in glob.glob("*", root_dir=self.tmp_path):
-            shutil.rmtree(os.path.join(self.tmp_path, file_path))
+        self.tmp_dir.cleanup()
 
     @mock.patch("gh_worktree.hooks.input")
     def test_check_allowed__existing_hook(self, mock_input):
@@ -76,7 +72,7 @@ class HooksTestCase(TestCase):
 
         self.assertTrue(self.hooks.fire(Hook.pre_init, "arg1"))
         mock_stream_exec.assert_called_once_with(
-            [str(hook_file), "arg1"], cwd=str(self.tmp_path)
+            [str(hook_file), "arg1"], cwd=self.tmp_path
         )
 
     @mock.patch("gh_worktree.hooks.Hooks._check_allowed")
@@ -113,7 +109,7 @@ class HooksTestCase(TestCase):
         hook_file = self.hooks_path / Hook.pre_init.name
         self.assertTrue(hook_file.exists())
         self.assertEqual(hook_file.read_text(), "echo ok")
-        self.assertTrue(os.access(hook_file, os.X_OK))
+        self.assertTrue(os.access(str(hook_file), os.X_OK))
 
     def test_add__existing(self):
         hook_file = self.hooks_path / Hook.pre_init.name

@@ -1,35 +1,53 @@
-import os
 import random
 import shlex
 import subprocess
+from pathlib import Path
 from typing import List
+from typing import Optional
+from typing import Union
 
 # Simple ANSI colors for the prefix
 COLORS = ["\033[92m", "\033[94m", "\033[95m", "\033[96m", "\033[93m"]
 COLOR_RESET = "\033[0m"
 
 
-def find_up(name: str, start_path: str):
+def find_up(name: str, start_path: Union[str, Path]) -> Path:
     """
     Looks upward for a directory that has file or directory with `name`
     :param name: The name of the file or directory to look for
     :param start_path: The path to start looking from
     :return: The path to the directory
     """
-    search_path = os.path.realpath(start_path)
+    search_path = Path(start_path).resolve()
 
     while True:
-        name_path = os.path.join(search_path, name)
-        if os.path.isdir(search_path) and os.path.exists(name_path):
+        name_path = search_path / name
+        if search_path.is_dir() and name_path.exists():
             return name_path
-        if search_path == os.path.dirname(search_path):
+        if search_path == search_path.parent:
             break
-        search_path = os.path.dirname(search_path)
+        search_path = search_path.parent
 
     raise RuntimeError(f"Could not find {name} in {start_path} ancestors")
 
 
-def stream_exec(command: List[str], wait_time: int = 60, cwd: str = None) -> int:
+def _log_prefix(command: List[str]) -> str:
+    """
+    Returns a prefix string for visibility, via logging, into the command being executed
+    :param command: The command list to be executed
+    :return: A string for prefixing log messages
+    """
+    command_prefix = command[:2]
+    command_script_path = Path(command_prefix[0])
+    if command_script_path.exists():
+        command_prefix[0] = command_script_path.name
+
+    return shlex.join(command_prefix)
+
+
+def stream_exec(
+    command: List[str], wait_time: int = 60, cwd: Optional[Union[str, Path]] = None
+) -> int:
     """
     Executes a command in a subprocess and streams its output to stdout.
     :param command: The command to execute as a list of strings
@@ -48,13 +66,9 @@ def stream_exec(command: List[str], wait_time: int = 60, cwd: str = None) -> int
         output_color = COLORS[process.pid % len(COLORS)]
         print(f"Executing: {output_color}{shlex.join(command)}{COLOR_RESET}")
 
-        command_prefix = command[:2]
-        if os.path.exists(command_prefix[0]):
-            command_prefix[0] = os.path.basename(command_prefix[0])
-
         for line in process.stdout:
             print(
-                f"{output_color}{shlex.join(command_prefix)} |{COLOR_RESET} {line}",
+                f"{output_color}{_log_prefix(command)} |{COLOR_RESET} {line}",
                 end="",
                 flush=True,
             )
@@ -64,7 +78,9 @@ def stream_exec(command: List[str], wait_time: int = 60, cwd: str = None) -> int
     return process.returncode
 
 
-def iter_output(command: List[str], wait_time: int = 60, cwd: str = None):
+def iter_output(
+    command: List[str], wait_time: int = 60, cwd: Optional[Union[str, Path]] = None
+):
     """
     Executes a command in a subprocess and iterates its output after completion
     :param command: The command to execute as a list of strings
@@ -83,13 +99,9 @@ def iter_output(command: List[str], wait_time: int = 60, cwd: str = None):
         cwd=cwd,
     )
 
-    command_prefix = command[:2]
-    if os.path.exists(command_prefix[0]):
-        command_prefix[0] = os.path.basename(command_prefix[0])
-
     for line in result.stdout.splitlines():
         print(
-            f"{output_color}{shlex.join(command_prefix)} |{COLOR_RESET} {line}",
+            f"{output_color}{_log_prefix(command)} |{COLOR_RESET} {line}",
             flush=True,
         )
         yield line

@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Optional
 from urllib import parse
@@ -87,13 +86,13 @@ class InitCommand(Command):
         repo_target = RepositoryTarget(repo, destination_dir=destination_dir)
         repo_target.validate()
 
-        project_dir = os.path.join(self._context.cwd, repo_target.destination_dir)
+        project_dir = self._context.cwd / repo_target.destination_dir
 
-        if os.path.exists(project_dir):
+        if project_dir.exists():
             # this would be problematic!
             raise AssertionError(f"Project directory {project_dir} already exists")
 
-        os.makedirs(project_dir, exist_ok=True)
+        project_dir.mkdir(parents=True, exist_ok=True)
 
         with self._context.use(project_dir):
             self._runtime.hooks.fire(
@@ -104,7 +103,7 @@ class InitCommand(Command):
             )
             self._runtime.git.clone(repo_target.uri, ".bare")
 
-            with open(os.path.join(project_dir, ".git"), "w") as f:
+            with (project_dir / ".git").open("w", encoding="utf-8") as f:
                 f.write("gitdir: ./.bare")
 
             self._runtime.git.config(
@@ -121,8 +120,10 @@ class InitCommand(Command):
                 is_private=repo_data["isPrivate"],
             )
 
-            os.makedirs(self._context.config_dir, exist_ok=True)
-            with open(os.path.join(self._context.config_dir, "config.json"), "w") as f:
+            self._context.config_dir.mkdir(parents=True, exist_ok=True)
+            with (self._context.config_dir / "config.json").open(
+                "w", encoding="utf-8"
+            ) as f:
                 config.save(f)
 
             self._add_hooks(config)

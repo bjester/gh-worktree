@@ -1,5 +1,3 @@
-import os.path
-
 from gh_worktree.command import Command
 from gh_worktree.hooks import Hook
 
@@ -25,7 +23,7 @@ class RemoveCommand(Command):
         :param force: Whether to force the removal of the worktree, if it's unmerged
         """
         project_dir = self._context.project_dir
-        if not os.path.exists(os.path.join(project_dir, worktree_name)):
+        if not (project_dir / worktree_name).exists():
             raise ValueError(f"Worktree {worktree_name} does not exist")
 
         with self._context.use(project_dir):

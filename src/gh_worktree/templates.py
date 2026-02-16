@@ -23,15 +23,15 @@ class Templates(ConfigOperator):
 
     def copy(self, worktree_name: str):
         config = self.context.get_config()
-        worktree_dir = Path(os.path.join(self.context.project_dir, worktree_name))
+        worktree_dir = self.context.project_dir / worktree_name
 
         self.replacement_map["REPO_NAME"] = config.name
-        self.replacement_map["REPO_DIR"] = self.context.project_dir
+        self.replacement_map["REPO_DIR"] = str(self.context.project_dir)
         self.replacement_map["WORKTREE_NAME"] = worktree_name
         self.replacement_map["WORKTREE_DIR"] = str(worktree_dir)
 
         for templates_dir in self.iter_config_dirs():
-            for path in Path(templates_dir).rglob("*"):
+            for path in templates_dir.rglob("*"):
                 relative_path = path.relative_to(templates_dir)
                 self._copy(worktree_dir, path, relative_path)
 
