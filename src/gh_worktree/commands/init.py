@@ -6,6 +6,7 @@ from gh_worktree.command import Command
 from gh_worktree.config import RepositoryConfig
 from gh_worktree.hooks import Hook
 from gh_worktree.hooks import HookExists
+from gh_worktree.templates import TemplateExists
 
 
 JUST_PATH_RE = re.compile(r"^[\w\-_]+/[\w\-_]+$")
@@ -126,6 +127,7 @@ class InitCommand(Command):
             ) as f:
                 config.save(f)
 
+            self._add_templates(config)
             self._add_hooks(config)
 
             self._runtime.hooks.fire(
@@ -149,4 +151,21 @@ class InitCommand(Command):
                     ):
                         f.write(f"{line}\n")
             except HookExists as e:
+                print(f"{str(e)} Skipping")
+
+    def _add_templates(self, config):
+        """Checks whether the repo has templates in the default branch and copies them"""
+        # check to see if repo has templates
+        for template_ls in self._runtime.git.ls_tree(
+            config.default_branch, ".gh/worktree/templates"
+        ):
+            template_file = template_ls.split("\t")[1]
+            # copy it
+            try:
+                with self._runtime.templates.add(template_file) as f:
+                    for line in self._runtime.git.cat_file(
+                        config.default_branch, template_file
+                    ):
+                        f.write(f"{line}\n")
+            except TemplateExists as e:
                 print(f"{str(e)} Skipping")

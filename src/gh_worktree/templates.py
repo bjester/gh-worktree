@@ -1,9 +1,14 @@
 import os
+from contextlib import contextmanager
 from pathlib import Path
 from string import Template
 
 from gh_worktree.context import Context
 from gh_worktree.operator import ConfigOperator
+
+
+class TemplateExists(Exception):
+    pass
 
 
 class Templates(ConfigOperator):
@@ -49,3 +54,15 @@ class Templates(ConfigOperator):
                 dest.write(Template(content).safe_substitute(self.replacement_map))
 
         dest_path.chmod(absolute_path.stat().st_mode)
+
+    @contextmanager
+    def add(self, relative_path: str):
+        template_file = self.context.project_dir / relative_path
+        template_file.parent.mkdir(parents=True, exist_ok=True)
+
+        if template_file.exists():
+            raise TemplateExists(f"Template {relative_path} already exists.")
+
+        # copy it to config
+        with template_file.open("w", encoding="utf-8", newline="\n") as f:
+            yield f

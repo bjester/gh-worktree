@@ -98,6 +98,7 @@ class InitCommandTestCase(TestCase):
         self.context = StubContext(self.tmp_path, self.config_dir)
 
         self.hooks = SimpleNamespace(fire=Mock(), add=MagicMock())
+        self.templates = SimpleNamespace(add=MagicMock())
         self.git = SimpleNamespace(
             clone=Mock(),
             config=Mock(),
@@ -117,7 +118,11 @@ class InitCommandTestCase(TestCase):
             )
         )
         self.runtime = SimpleNamespace(
-            context=self.context, hooks=self.hooks, git=self.git, gh=self.gh
+            context=self.context,
+            hooks=self.hooks,
+            templates=self.templates,
+            git=self.git,
+            gh=self.gh,
         )
 
     def tearDown(self):
@@ -168,3 +173,37 @@ class InitCommandTestCase(TestCase):
         command("octo/repo", str(self.project_dir))
 
         mock_f.write.assert_called_once_with("echo 'hello'\n")
+
+    def test_call__installs_templates(self):
+        self.git.ls_tree.return_value = iter(
+            ["100755 blob ...\t.gh/worktree/templates/example.txt"]
+        )
+        self.git.cat_file.return_value = iter(["hello"])
+        mock_f = self.runtime.templates.add.return_value.__enter__.return_value
+
+        command = InitCommand(self.runtime)
+        command("octo/repo", str(self.project_dir))
+
+        self.runtime.templates.add.assert_called_once_with(
+            ".gh/worktree/templates/example.txt"
+        )
+        mock_f.write.assert_called_once_with("hello\n")
+
+    def test_add_templates__skips_existing(self):
+        from gh_worktree.templates import TemplateExists
+
+        config = SimpleNamespace(default_branch="main")
+        self.git.ls_tree.return_value = iter(
+            ["100755 blob ...\t.gh/worktree/templates/example.txt"]
+        )
+        self.runtime.templates.add.side_effect = TemplateExists(
+            "Template .gh/worktree/templates/example.txt already exists."
+        )
+
+        command = InitCommand(self.runtime)
+        command._add_templates(config)
+
+        self.runtime.templates.add.assert_called_once_with(
+            ".gh/worktree/templates/example.txt"
+        )
+        self.git.cat_file.assert_not_called()
