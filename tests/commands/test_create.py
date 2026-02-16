@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from types import SimpleNamespace
+from unittest import TestCase
 from unittest.mock import Mock
 
 from gh_worktree.commands.create import CreateCommand
@@ -24,50 +25,57 @@ class StubContext:
         yield
 
 
-def test_create_command_uses_default_branch_and_remote():
-    context = StubContext("/repo", SimpleNamespace(default_branch="main"))
-    hooks = SimpleNamespace(fire=Mock())
-    git = SimpleNamespace(fetch=Mock(), add_worktree=Mock())
-    templates = SimpleNamespace(copy=Mock())
-    runtime = SimpleNamespace(
-        context=context,
-        hooks=hooks,
-        git=git,
-        templates=templates,
-        get_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
-    )
+class CreateCommandTestCase(TestCase):
+    def setUp(self):
+        self.config = SimpleNamespace(default_branch="main")
+        self.context = StubContext("/repo", self.config)
+        self.hooks = SimpleNamespace(fire=Mock())
+        self.git = SimpleNamespace(fetch=Mock(), add_worktree=Mock())
+        self.templates = SimpleNamespace(copy=Mock())
+        self.runtime = SimpleNamespace(
+            context=self.context,
+            hooks=self.hooks,
+            git=self.git,
+            templates=self.templates,
+            get_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
+        )
+        self.command = CreateCommand(self.runtime)
 
-    command = CreateCommand(runtime)
-    command("feature")
+    def test_call__uses_default_branch_and_remote(self):
+        self.command("feature")
 
-    assert context.assert_called is True
-    runtime.get_remote.assert_called_once_with()
-    git.fetch.assert_called_once_with("origin")
-    git.add_worktree.assert_called_once_with("feature", "origin/main")
-    templates.copy.assert_called_once_with("feature")
-    hooks.fire.assert_any_call(Hook.pre_create, "feature", "origin/main")
-    hooks.fire.assert_any_call(Hook.post_create, "feature", "origin/main")
+        self.assertTrue(self.context.assert_called)
+        self.runtime.get_remote.assert_called_once_with()
+        self.git.fetch.assert_called_once_with("origin")
+        self.git.add_worktree.assert_called_once_with("feature", "origin/main")
+        self.templates.copy.assert_called_once_with("feature")
+        self.hooks.fire.assert_any_call(Hook.pre_create, "feature", "origin/main")
+        self.hooks.fire.assert_any_call(Hook.post_create, "feature", "origin/main")
 
+    def test_call__respects_explicit_remote_and_ref(self):
+        self.command("feature", "upstream/dev")
 
-def test_create_command_respects_explicit_remote_and_ref():
-    context = StubContext("/repo", SimpleNamespace(default_branch="main"))
-    hooks = SimpleNamespace(fire=Mock())
-    git = SimpleNamespace(fetch=Mock(), add_worktree=Mock())
-    templates = SimpleNamespace(copy=Mock())
-    runtime = SimpleNamespace(
-        context=context,
-        hooks=hooks,
-        git=git,
-        templates=templates,
-        get_remote=Mock(),
-    )
+        self.assertTrue(self.context.assert_called)
+        self.runtime.get_remote.assert_not_called()
+        self.git.fetch.assert_called_once_with("upstream")
+        self.git.add_worktree.assert_called_once_with("feature", "upstream/dev")
+        self.templates.copy.assert_called_once_with("feature")
+        self.hooks.fire.assert_any_call(Hook.pre_create, "feature", "upstream/dev")
+        self.hooks.fire.assert_any_call(Hook.post_create, "feature", "upstream/dev")
 
-    command = CreateCommand(runtime)
-    command("feature", "upstream/dev")
+    def test_call__handles_ref_with_slashes(self):
+        self.command("feature", "upstream/some/nested/branch")
 
-    runtime.get_remote.assert_not_called()
-    git.fetch.assert_called_once_with("upstream")
-    git.add_worktree.assert_called_once_with("feature", "upstream/dev")
-    templates.copy.assert_called_once_with("feature")
-    hooks.fire.assert_any_call(Hook.pre_create, "feature", "upstream/dev")
-    hooks.fire.assert_any_call(Hook.post_create, "feature", "upstream/dev")
+        self.assertTrue(self.context.assert_called)
+        self.runtime.get_remote.assert_not_called()
+        self.git.fetch.assert_called_once_with("upstream")
+        self.git.add_worktree.assert_called_once_with(
+            "feature", "upstream/some/nested/branch"
+        )
+        self.templates.copy.assert_called_once_with("feature")
+        self.hooks.fire.assert_any_call(
+            Hook.pre_create, "feature", "upstream/some/nested/branch"
+        )
+        self.hooks.fire.assert_any_call(
+            Hook.post_create, "feature", "upstream/some/nested/branch"
+        )
