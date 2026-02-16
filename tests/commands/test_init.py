@@ -1,14 +1,11 @@
-import glob
-import os
 import pathlib
-import shutil
+import tempfile
 from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 
-import pytest
 from gh_worktree.commands.init import InitCommand
 from gh_worktree.commands.init import normalize
 from gh_worktree.commands.init import RepositoryTarget
@@ -17,36 +14,38 @@ from gh_worktree.hooks import Hook
 
 class StubContext:
     def __init__(self, cwd, config_dir):
-        self.cwd = str(cwd)
-        self.config_dir = str(config_dir)
+        self.cwd = cwd
+        self.config_dir = config_dir
 
     @contextmanager
     def use(self, cwd):
         old_cwd = self.cwd
-        self.cwd = str(cwd)
+        self.cwd = cwd
         try:
             yield
         finally:
             self.cwd = old_cwd
 
 
-def test_normalize__owner_repo():
-    assert normalize("octo/repo") == "https://github.com/octo/repo.git"
+class NormalizeTestCase(TestCase):
+    def test_owner_repo(self):
+        self.assertEqual(normalize("octo/repo"), "https://github.com/octo/repo.git")
 
+    def test_no_dot_git(self):
+        self.assertEqual(
+            normalize("https://github.com/octo/repo"),
+            "https://github.com/octo/repo.git",
+        )
 
-def test_normalize__no_dot_git():
-    assert (
-        normalize("https://github.com/octo/repo") == "https://github.com/octo/repo.git"
-    )
+    def test_ssh(self):
+        self.assertEqual(
+            normalize("git@github.com:octo/repo.git"),
+            "git@github.com:octo/repo.git",
+        )
 
-
-def test_normalize__ssh():
-    assert normalize("git@github.com:octo/repo.git") == "git@github.com:octo/repo.git"
-
-
-def test_normalize__invalid_repo():
-    with pytest.raises(ValueError, match="Invalid repository path format"):
-        normalize("not a repo")
+    def test_invalid_repo(self):
+        with self.assertRaisesRegex(ValueError, "Invalid repository path format"):
+            normalize("not a repo")
 
 
 class RepositoryTargetTestCase(TestCase):
@@ -91,11 +90,9 @@ class RepositoryTargetTestCase(TestCase):
 
 
 class InitCommandTestCase(TestCase):
-    @pytest.fixture(autouse=True)
-    def prepare_fixture(self, tmp_path):
-        self.tmp_path = tmp_path
-
     def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = pathlib.Path(self.tmp_dir.name)
         self.project_dir = pathlib.Path("project")
         self.config_dir = self.tmp_path / ".gh" / "worktree"
         self.context = StubContext(self.tmp_path, self.config_dir)
@@ -124,8 +121,7 @@ class InitCommandTestCase(TestCase):
         )
 
     def tearDown(self):
-        for file_path in glob.glob("*", root_dir=self.tmp_path):
-            shutil.rmtree(os.path.join(self.tmp_path, file_path))
+        self.tmp_dir.cleanup()
 
     def test_call__basic(self):
         command = InitCommand(self.runtime)
@@ -140,20 +136,20 @@ class InitCommandTestCase(TestCase):
         self.git.fetch.assert_called_once_with()
 
         gitdir_file = self.tmp_path / self.project_dir / ".git"
-        assert gitdir_file.read_text() == "gitdir: ./.bare"
+        self.assertEqual(gitdir_file.read_text(), "gitdir: ./.bare")
         config_file = self.config_dir / "config.json"
-        assert config_file.exists()
+        self.assertTrue(config_file.exists())
 
         self.hooks.fire.assert_any_call(
             Hook.pre_init,
             "https://github.com/octo/repo.git",
-            str(self.tmp_path / self.project_dir),
+            self.tmp_path / self.project_dir,
             skip_project=True,
         )
         self.hooks.fire.assert_any_call(
             Hook.post_init,
             "https://github.com/octo/repo.git",
-            str(self.tmp_path / self.project_dir),
+            self.tmp_path / self.project_dir,
         )
 
     def test_call__installs_hooks(self):

@@ -37,21 +37,23 @@ class Hooks(ConfigOperator):
         fired = False
 
         for hooks_dir in self.iter_config_dirs(skip_project=skip_project):
-            hook_file = os.path.join(hooks_dir, hook.name)
-            if not os.path.exists(hook_file):
+            hook_file = hooks_dir / hook.name
+            if not hook_file.exists():
                 continue
 
             # Ensure the hook file is executable
-            if not os.access(hook_file, os.X_OK):
-                print(f"Hook {hook_file} is not executable. Skipping.")
+            hook_file_str = str(hook_file)
+            if not os.access(hook_file_str, os.X_OK):
+                print(f"Hook {hook_file_str} is not executable. Skipping.")
                 continue
 
-            if not self._check_allowed(hook_file):
-                print(f"Hook {hook_file} is not allowed to run. Skipping.")
+            if not self._check_allowed(hook_file_str):
+                print(f"Hook {hook_file_str} is not allowed to run. Skipping.")
                 continue
 
             fired = True
-            return_status = stream_exec([hook_file, *args], cwd=self.context.cwd)
+            command_args = [hook_file_str, *[str(arg) for arg in args]]
+            return_status = stream_exec(command_args, cwd=self.context.cwd)
             if return_status != 0:
                 raise RuntimeError(
                     f"Hook {hook.name} failed with exit code {return_status}"
@@ -80,16 +82,16 @@ class Hooks(ConfigOperator):
 
     @contextmanager
     def add(self, hook: Hook):
-        hooks_dir = os.path.join(self.context.config_dir, "hooks")
-        hook_file = os.path.join(hooks_dir, hook.name)
-        os.makedirs(hooks_dir, exist_ok=True)
+        hooks_dir = self.context.config_dir / "hooks"
+        hook_file = hooks_dir / hook.name
+        hooks_dir.mkdir(parents=True, exist_ok=True)
 
-        if os.path.exists(hook_file):
+        if hook_file.exists():
             raise HookExists(f"Hook {hook_file} already exists.")
 
         # copy it to config
-        with open(hook_file, "w", newline="\n") as f:
+        with hook_file.open("w", encoding="utf-8", newline="\n") as f:
             yield f
 
         # allow exec
-        os.chmod(hook_file, os.stat(hook_file).st_mode | stat.S_IEXEC)
+        hook_file.chmod(hook_file.stat().st_mode | stat.S_IEXEC)

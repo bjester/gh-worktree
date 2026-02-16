@@ -12,11 +12,11 @@ class StubContext:
     def __init__(
         self, project_dir, config, global_config, config_dir, global_config_dir
     ):
-        self.project_dir = str(project_dir)
+        self.project_dir = project_dir
         self._config = config
         self._global_config = global_config
-        self.config_dir = str(config_dir)
-        self.global_config_dir = str(global_config_dir)
+        self.config_dir = config_dir
+        self.global_config_dir = global_config_dir
 
     def get_config(self):
         return self._config
@@ -30,8 +30,8 @@ class TemplatesTestCase(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures before each test method."""
-        self.tmp_dir = tempfile.mkdtemp()
-        self.tmp_path = Path(self.tmp_dir)
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = Path(self.tmp_dir.name)
 
         self.global_dir = self.tmp_path / "global"
         self.project_dir = self.tmp_path / "project"
@@ -60,9 +60,7 @@ class TemplatesTestCase(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test fixtures after each test method."""
-        import shutil
-
-        shutil.rmtree(self.tmp_dir)
+        self.tmp_dir.cleanup()
 
     def _create_context(self, allowed_envvars=None):
         """Helper method to create a context with custom allowed_envvars."""

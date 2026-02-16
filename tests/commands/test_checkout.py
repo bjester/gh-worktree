@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import ANY
@@ -11,7 +12,7 @@ from gh_worktree.hooks import Hook
 
 class StubContext:
     def __init__(self, project_dir, config):
-        self.project_dir = str(project_dir)
+        self.project_dir = project_dir
         self._config = config
         self.assert_called = False
 
@@ -33,7 +34,7 @@ class CheckoutCommandTestCase(TestCase):
             owner="octo",
             name="repo",
         )
-        self.context = StubContext("/repo", self.config)
+        self.context = StubContext(Path("/repo"), self.config)
         self.hooks = SimpleNamespace(fire=Mock())
         self.git = SimpleNamespace(open_worktree=Mock(), fetch=Mock())
         self.gh = SimpleNamespace(pr_status=Mock())

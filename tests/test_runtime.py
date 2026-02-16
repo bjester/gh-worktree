@@ -5,7 +5,7 @@ from gh_worktree.git import GitRemote
 from gh_worktree.runtime import Runtime
 
 
-class RemoteTestCase(TestCase):
+class RuntimeTestCase(TestCase):
     def setUp(self):
         self.runtime = Runtime()
         self.config = SimpleNamespace(owner="octo", name="repo")
