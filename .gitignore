@@ -13,7 +13,20 @@ wheels/
 # IDE
 .idea/
 /*.iml
-.aiassistant/
+.vscode
+*.swp
 
 # Testing
 playground/
+
+# macs
+.DS_Store
+
+# Ignore pytest cache directory
+.pytest_cache/
+
+# AI
+/.aiassistant/
+/.junie/
+/.gemini/
+/AGENTS.md
