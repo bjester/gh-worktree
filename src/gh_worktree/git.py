@@ -64,7 +64,10 @@ class GitCLI(object):
         """Create a new worktree from an existing branch"""
         if ".." in name or name.startswith("/"):
             raise ValueError("Worktree name cannot contain '..' or start with '/'")
-        self._stream_exec("worktree", "add", "--", name)
+        # `git worktree add <path>` creates a new branch from HEAD. To use an
+        # existing branch, the command is `git worktree add <path> <branch>`.
+        # We pass `name` for both to check out the existing branch in a path with the same name.
+        self._stream_exec("worktree", "add", "--", name, name)
 
     def remove_worktree(self, name: str, force: bool = False):
         args = ["worktree", "remove"]
