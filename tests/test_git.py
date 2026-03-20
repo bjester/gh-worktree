@@ -110,7 +110,22 @@ class GitCLITestCase(TestCase):
     def test_open_worktree(self):
         self.cli.open_worktree("existing-branch")
         self.mock_stream_exec.assert_called_once_with(
-            ["git", "worktree", "add", "--", "existing-branch"], cwd=Path("/test/tmp")
+            ["git", "worktree", "add", "--", "existing-branch", "existing-branch"],
+            cwd=Path("/test/tmp"),
+        )
+
+    def test_open_worktree__with_slash_in_name(self):
+        self.cli.open_worktree("feature/existing-branch")
+        self.mock_stream_exec.assert_called_once_with(
+            [
+                "git",
+                "worktree",
+                "add",
+                "--",
+                "feature/existing-branch",
+                "feature/existing-branch",
+            ],
+            cwd=Path("/test/tmp"),
         )
 
     def test_open_worktree_validation(self):

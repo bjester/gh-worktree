@@ -64,7 +64,9 @@ class GitCLI(object):
         """Create a new worktree from an existing branch"""
         if ".." in name or name.startswith("/"):
             raise ValueError("Worktree name cannot contain '..' or start with '/'")
-        self._stream_exec("worktree", "add", "--", name)
+        # pass the name twice otherwise git uses the basename of the name, which if it contains
+        # slashes, may not create a matching branch name
+        self._stream_exec("worktree", "add", "--", name, name)
 
     def remove_worktree(self, name: str, force: bool = False):
         args = ["worktree", "remove"]
