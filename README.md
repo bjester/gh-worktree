@@ -1,5 +1,11 @@
 # gh-worktree
 
+[![Python tests](https://github.com/bjester/gh-worktree/actions/workflows/pytest.yml/badge.svg?branch=main)](https://github.com/bjester/gh-worktree/actions/workflows/pytest.yml)
+[![Build](https://github.com/bjester/gh-worktree/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/bjester/gh-worktree/actions/workflows/build.yml)
+[![PyPI](https://img.shields.io/pypi/v/gh-worktree.svg?color=blue)](https://pypi.org/project/gh-worktree/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org)
+
+
 A CLI tool that helps you manage Git worktrees. This was built as a GitHub CLI (`gh`) extension, but it can be used directly. Although it does rely on the following being available:
 - `git` (obviously)
 - [`gh`](https://cli.github.com/)
