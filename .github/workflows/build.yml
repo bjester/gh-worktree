@@ -13,7 +13,7 @@ jobs:
       pex-artifact-id: ${{ steps.artifact-pex-upload-step.outputs.artifact-id }}
       exe-artifact-id: ${{ steps.artifact-exe-upload-step.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Set up Python
@@ -28,19 +28,19 @@ jobs:
           echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
           echo "PEX_NAME=$(ls gh-worktree.pex)" >> $GITHUB_ENV
           echo "EXE_NAME=$(ls gh-worktree)" >> $GITHUB_ENV
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         id: artifact-whl-upload-step
         if: github.event_name == 'pull_request'
         with:
           name: ${{ env.WHL_NAME }}
           path: dist/*.whl
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         id: artifact-pex-upload-step
         if: github.event_name == 'pull_request'
         with:
           name: ${{ env.PEX_NAME }}
           path: dist/gh-worktree.pex
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         id: artifact-exe-upload-step
         if: github.event_name == 'pull_request'
         with:
@@ -56,7 +56,7 @@ jobs:
       contents: read
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }},${{ needs.build.outputs.exe-artifact-id }}
 
