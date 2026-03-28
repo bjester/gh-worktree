@@ -1,4 +1,5 @@
 import random
+import re
 import shlex
 import subprocess
 from pathlib import Path
@@ -76,6 +77,21 @@ def stream_exec(
         process.wait(wait_time)
 
     return process.returncode
+
+
+def normalize_worktree_name(name: str) -> str:
+    """
+    Normalize a worktree name by replacing slashes and other non-alphanumeric
+    characters with dashes, keeping only letters, numbers, and dashes.
+    Consecutive replacement characters are collapsed into a single dash.
+    :param name: The worktree name to normalize
+    :return: A normalized version of the worktree name
+    """
+    # Replace any non-alphanumeric character (except dash) with a dash
+    result = re.sub(r"[^a-zA-Z0-9-]", "-", name)
+    # Collapse consecutive dashes into a single dash
+    result = re.sub(r"-+", "-", result)
+    return result
 
 
 def iter_output(
