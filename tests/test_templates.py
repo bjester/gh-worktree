@@ -135,6 +135,43 @@ class TemplatesTestCase(unittest.TestCase):
         nested_content = (worktree_dir / "subdir" / "nested.txt").read_text()
         self.assertIn(f"NESTED: {self.project_dir}", nested_content)
 
+    @patch.dict(os.environ, {"USER": "testuser"})
+    def test_copy__substitutes_normalized_worktree_name(self):
+        """Test that copy provides WORKTREE_NAME_NORMALIZED variable."""
+        context = self._create_context(allowed_envvars=["USER"])
+        templates = Templates(context)
+
+        # Create worktree directory (normally done by git worktree add)
+        worktree_dir = self.project_dir / "feat/some-feature"
+        worktree_dir.mkdir(parents=True)
+
+        # Add a template that uses the normalized name
+        (self.project_templates_dir / "normalized.txt").write_text(
+            "NORMALIZED: $WORKTREE_NAME_NORMALIZED\n"
+        )
+
+        templates.copy("feat/some-feature")
+
+        normalized_content = (worktree_dir / "normalized.txt").read_text()
+        self.assertIn("NORMALIZED: feat-some-feature", normalized_content)
+
+    def test_copy__normalized_replaces_underscores_with_dashes(self):
+        """Test that WORKTREE_NAME_NORMALIZED replaces underscores with dashes."""
+        context = self._create_context()
+        templates = Templates(context)
+
+        worktree_dir = self.project_dir / "my_feature-branch"
+        worktree_dir.mkdir(parents=True)
+
+        (self.project_templates_dir / "normalized.txt").write_text(
+            "NORMALIZED: $WORKTREE_NAME_NORMALIZED\n"
+        )
+
+        templates.copy("my_feature-branch")
+
+        normalized_content = (worktree_dir / "normalized.txt").read_text()
+        self.assertIn("NORMALIZED: my-feature-branch", normalized_content)
+
     def test_copy__preserves_file_permissions(self):
         """Test that copy preserves file permissions."""
         executable_file = self.project_templates_dir / "script.sh"

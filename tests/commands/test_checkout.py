@@ -59,8 +59,8 @@ class CheckoutCommandTestCase(TestCase):
         self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
         self.templates.copy.assert_called_once_with("feature")
-        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
-        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
+        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY, "feature")
+        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY, "feature")
 
     def test_call__uses_remote_and_branch_name(self):
         self.command("feature", remote="aremote")
@@ -70,8 +70,8 @@ class CheckoutCommandTestCase(TestCase):
         self.git.fetch.assert_called_once_with("aremote", "feature:feature")
         self.git.open_worktree.assert_called_once_with("feature")
         self.templates.copy.assert_called_once_with("feature")
-        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
-        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
+        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY, "feature")
+        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY, "feature")
 
     def test_call__uses_pr_number(self):
         self.gh.pr_status.return_value = {
@@ -85,8 +85,8 @@ class CheckoutCommandTestCase(TestCase):
         self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
         self.templates.copy.assert_called_once_with("feature")
-        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
-        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
+        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY, "feature")
+        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY, "feature")
 
     def test_call__uses_pr_url(self):
         self.gh.pr_status.return_value = {
@@ -100,8 +100,8 @@ class CheckoutCommandTestCase(TestCase):
         self.runtime.get_remote.assert_called_once_with(owner_name="octo")
         self.git.open_worktree.assert_called_once_with("feature")
         self.templates.copy.assert_called_once_with("feature")
-        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY)
-        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY)
+        self.hooks.fire.assert_any_call(Hook.pre_checkout, "feature", ANY, "feature")
+        self.hooks.fire.assert_any_call(Hook.post_checkout, "feature", ANY, "feature")
 
     def test_call__raises_on_missing_remote(self):
         self.runtime.get_remote.return_value = None

@@ -50,8 +50,12 @@ class CreateCommandTestCase(TestCase):
         self.git.fetch.assert_called_once_with("origin")
         self.git.add_worktree.assert_called_once_with("feature", "origin/main")
         self.templates.copy.assert_called_once_with("feature")
-        self.hooks.fire.assert_any_call(Hook.pre_create, "feature", "origin/main")
-        self.hooks.fire.assert_any_call(Hook.post_create, "feature", "origin/main")
+        self.hooks.fire.assert_any_call(
+            Hook.pre_create, "feature", "origin/main", "feature"
+        )
+        self.hooks.fire.assert_any_call(
+            Hook.post_create, "feature", "origin/main", "feature"
+        )
 
     def test_call__respects_explicit_remote_and_ref(self):
         self.command("feature", "upstream/dev")
@@ -61,8 +65,12 @@ class CreateCommandTestCase(TestCase):
         self.git.fetch.assert_called_once_with("upstream")
         self.git.add_worktree.assert_called_once_with("feature", "upstream/dev")
         self.templates.copy.assert_called_once_with("feature")
-        self.hooks.fire.assert_any_call(Hook.pre_create, "feature", "upstream/dev")
-        self.hooks.fire.assert_any_call(Hook.post_create, "feature", "upstream/dev")
+        self.hooks.fire.assert_any_call(
+            Hook.pre_create, "feature", "upstream/dev", "feature"
+        )
+        self.hooks.fire.assert_any_call(
+            Hook.post_create, "feature", "upstream/dev", "feature"
+        )
 
     def test_call__handles_ref_with_slashes(self):
         self.command("feature", "upstream/some/nested/branch")
@@ -75,8 +83,8 @@ class CreateCommandTestCase(TestCase):
         )
         self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(
-            Hook.pre_create, "feature", "upstream/some/nested/branch"
+            Hook.pre_create, "feature", "upstream/some/nested/branch", "feature"
         )
         self.hooks.fire.assert_any_call(
-            Hook.post_create, "feature", "upstream/some/nested/branch"
+            Hook.post_create, "feature", "upstream/some/nested/branch", "feature"
         )
