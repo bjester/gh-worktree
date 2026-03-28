@@ -73,7 +73,7 @@ For example, you might consider adding a `post_create` hook for this project lik
 
 WORKTREE_NAME="$1"
 BASE_REF="$2" # format: `remote/branch`
-WORKTREE_NAME_NORMALIZED="$3" # same as WORKTREE_NAME but with slashes replaced by dashes
+WORKTREE_NAME_NORMALIZED="$3" # WORKTREE_NAME with non-alphanumeric characters replaced by dashes
 
 pushd "$WORKTREE_NAME"
 
