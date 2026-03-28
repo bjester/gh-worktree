@@ -5,6 +5,7 @@ from string import Template
 
 from gh_worktree.context import Context
 from gh_worktree.operator import ConfigOperator
+from gh_worktree.utils import normalize_worktree_name
 
 
 class TemplateExists(Exception):
@@ -27,12 +28,20 @@ class Templates(ConfigOperator):
             self.replacement_map[envvar_name] = os.environ.get(envvar_name, "")
 
     def copy(self, worktree_name: str):
+        """
+        Copies files from /templates configuration directory into a worktree, replacing environment
+        variables in the process.
+        :param worktree_name: The name of the worktree to copy the templates into
+        """
         config = self.context.get_config()
         worktree_dir = self.context.project_dir / worktree_name
 
         self.replacement_map["REPO_NAME"] = config.name
         self.replacement_map["REPO_DIR"] = str(self.context.project_dir)
         self.replacement_map["WORKTREE_NAME"] = worktree_name
+        self.replacement_map["WORKTREE_NAME_NORMALIZED"] = normalize_worktree_name(
+            worktree_name
+        )
         self.replacement_map["WORKTREE_DIR"] = str(worktree_dir)
 
         for templates_dir in self.iter_config_dirs():

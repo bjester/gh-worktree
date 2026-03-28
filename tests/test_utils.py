@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from gh_worktree.utils import find_up
+from gh_worktree.utils import normalize_worktree_name
 
 
 class FindUpTestCase(TestCase):
@@ -42,3 +43,43 @@ class FindUpTestCase(TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "Could not find non_existent_file"):
             find_up("non_existent_file", subdir)
+
+
+class NormalizeWorktreeNameTestCase(TestCase):
+    def test_simple_name_unchanged(self):
+        self.assertEqual(normalize_worktree_name("feature"), "feature")
+
+    def test_slash_replaced_with_dash(self):
+        self.assertEqual(
+            normalize_worktree_name("feat/some-feature"), "feat-some-feature"
+        )
+
+    def test_multiple_slashes_collapsed(self):
+        self.assertEqual(
+            normalize_worktree_name("feat/nested/branch"), "feat-nested-branch"
+        )
+
+    def test_dashes_preserved(self):
+        self.assertEqual(
+            normalize_worktree_name("my-feature-branch"), "my-feature-branch"
+        )
+
+    def test_underscores_replaced(self):
+        self.assertEqual(
+            normalize_worktree_name("my_feature_branch"), "my-feature-branch"
+        )
+
+    def test_mixed_slashes_and_dashes(self):
+        self.assertEqual(normalize_worktree_name("feat/my-feature"), "feat-my-feature")
+
+    def test_numbers_preserved(self):
+        self.assertEqual(normalize_worktree_name("feature-123"), "feature-123")
+
+    def test_special_chars_replaced(self):
+        self.assertEqual(normalize_worktree_name("feat@branch#1"), "feat-branch-1")
+
+    def test_consecutive_special_chars_collapsed(self):
+        self.assertEqual(normalize_worktree_name("feat//branch"), "feat-branch")
+
+    def test_consecutive_mixed_special_chars_collapsed(self):
+        self.assertEqual(normalize_worktree_name("feat/@/#branch"), "feat-branch")

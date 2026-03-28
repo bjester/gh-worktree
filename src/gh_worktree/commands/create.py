@@ -2,6 +2,7 @@ from typing import Optional
 
 from gh_worktree.command import Command
 from gh_worktree.hooks import Hook
+from gh_worktree.utils import normalize_worktree_name
 
 
 class CreateCommand(Command):
@@ -43,14 +44,22 @@ class CreateCommand(Command):
         # self._runtime.git.fetch(git_remote_name, f"{base_ref}:{base_ref}")
         self._runtime.git.fetch(git_remote_name)
 
+        normalized_name = normalize_worktree_name(worktree_name)
+
         with self._context.use(self._context.project_dir):
             self._runtime.hooks.fire(
-                Hook.pre_create, worktree_name, f"{git_remote_name}/{base_ref}"
+                Hook.pre_create,
+                worktree_name,
+                f"{git_remote_name}/{base_ref}",
+                normalized_name,
             )
             self._runtime.git.add_worktree(
                 worktree_name, f"{git_remote_name}/{base_ref}"
             )
             self._runtime.templates.copy(worktree_name)
             self._runtime.hooks.fire(
-                Hook.post_create, worktree_name, f"{git_remote_name}/{base_ref}"
+                Hook.post_create,
+                worktree_name,
+                f"{git_remote_name}/{base_ref}",
+                normalized_name,
             )

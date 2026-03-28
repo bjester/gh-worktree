@@ -5,6 +5,7 @@ from typing import Optional
 from gh_worktree.command import Command
 from gh_worktree.hooks import Hook
 from gh_worktree.runtime import Runtime
+from gh_worktree.utils import normalize_worktree_name
 
 
 URL_RE = re.compile(r"^https://github\.com/[a-z0-9-]+/[\w.-]+/pull/\d+$", re.IGNORECASE)
@@ -131,11 +132,14 @@ class CheckoutCommand(Command):
                 print("Ignoring git fetch error, attempting to open worktree")
                 pass
 
+        normalized_name = normalize_worktree_name(inpt.worktree_name)
+
         with self._context.use(self._context.project_dir):
             self._runtime.hooks.fire(
                 Hook.pre_checkout,
                 inpt.worktree_name,
                 f"{inpt.remote}/{inpt.worktree_name}",
+                normalized_name,
             )
             self._runtime.git.open_worktree(inpt.worktree_name)
             self._runtime.templates.copy(inpt.worktree_name)
@@ -143,4 +147,5 @@ class CheckoutCommand(Command):
                 Hook.post_checkout,
                 inpt.worktree_name,
                 f"{inpt.remote}/{inpt.worktree_name}",
+                normalized_name,
             )

@@ -53,5 +53,5 @@ class RemoveCommandTestCase(TestCase):
         command("feature", force=True)
 
         git.remove_worktree.assert_called_once_with("feature", force=True)
-        hooks.fire.assert_any_call(Hook.pre_remove, "feature")
-        hooks.fire.assert_any_call(Hook.post_remove, "feature")
+        hooks.fire.assert_any_call(Hook.pre_remove, "feature", "feature")
+        hooks.fire.assert_any_call(Hook.post_remove, "feature", "feature")
