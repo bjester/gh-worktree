@@ -78,6 +78,7 @@ pushd "$WORKTREE_NAME"
 
 uv venv
 uv sync --group dev
+prek install -f
 
 popd
 ```
@@ -147,7 +148,7 @@ make dist/gh-worktree
 ```
 
 ## AI Disclosure
-LLMs were used in the development of this project, mostly for brainstorming and bootstrapping code, particularly tests. The contribution proportion is roughly 80 / 20, human and AI code respectively.
+LLMs were used in the development of this project, mostly for brainstorming and bootstrapping code, particularly tests. The contribution proportion is roughly 80 / 20, human and AI code respectively. This may change over time as I try out agents!
 
 ## License
 [MIT](LICENSE) :: Copyright 2026 Blaine Jester

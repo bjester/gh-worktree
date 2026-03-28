@@ -38,7 +38,7 @@ Issues = "https://github.com/bjester/gh-worktree/issues"
 dev = [
     "pytest>=8.0.0",
     "exceptiongroup; python_version < '3.11'",
-    "pre-commit",
+    "prek",
     "pyinstaller"
 ]
 
