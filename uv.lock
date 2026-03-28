@@ -46,7 +46,7 @@ wheels = [
 
 [[package]]
 name = "gh-worktree"
-version = "0.2.2"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
