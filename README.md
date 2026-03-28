@@ -78,6 +78,7 @@ pushd "$WORKTREE_NAME"
 
 uv venv
 uv sync --group dev
+prek install -f
 
 popd
 ```
