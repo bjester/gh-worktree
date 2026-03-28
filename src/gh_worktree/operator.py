@@ -5,6 +5,10 @@ from gh_worktree.context import Context
 
 
 class ConfigOperator(object):
+    """
+    Base class for utility classes that rely on the configuration directories.
+    """
+
     dir_name: str
 
     def __init__(self, context: Context):

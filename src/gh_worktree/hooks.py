@@ -29,11 +29,26 @@ class HookExists(Exception):
 
 
 class Hooks(ConfigOperator):
+    """
+    Encapsulates operations for managing and executing hooks in the configuration
+    system, such as firing hooks, checking their permissions, and adding new hooks.
+
+    This class is designed to integrate with a configuration directory structure,
+    allowing for the execution of hooks with appropriate validation steps. Hooks
+    are only executed if they're checksum has been registered as allowed.
+    """
+
     def __init__(self, context: Context):
         super().__init__(context)
         self.dir_name = "hooks"
 
     def fire(self, hook: Hook, *args, skip_project: bool = False) -> bool:
+        """
+        Fire a hook with given arguments.
+        :param hook: The hook to fire
+        :param args: The arguments to pass to the hook
+        :param skip_project: Whether to skip the project-level hooks
+        """
         fired = False
 
         for hooks_dir in self.iter_config_dirs(skip_project=skip_project):
@@ -61,6 +76,11 @@ class Hooks(ConfigOperator):
         return fired
 
     def _check_allowed(self, hook_file: str) -> bool:
+        """
+        Check if a hook is allowed to run.
+        :param hook_file: The path to the hook file
+        :return: Whether the hook is allowed to run
+        """
         with open(hook_file, "rb") as f:
             content = f.read()
         checksum = hashlib.sha256(content).hexdigest()
@@ -82,6 +102,10 @@ class Hooks(ConfigOperator):
 
     @contextmanager
     def add(self, hook: Hook):
+        """
+        Add a new hook to the worktree configuration and yields a file handle to write its contents.
+        :param hook: The hook to add
+        """
         hooks_dir = self.context.config_dir / "hooks"
         hook_file = hooks_dir / hook.name
         hooks_dir.mkdir(parents=True, exist_ok=True)
