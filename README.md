@@ -73,6 +73,7 @@ For example, you might consider adding a `post_create` hook for this project lik
 
 WORKTREE_NAME="$1"
 BASE_REF="$2" # format: `remote/branch`
+WORKTREE_NAME_NORMALIZED="$3" # same as WORKTREE_NAME but with slashes replaced by dashes
 
 pushd "$WORKTREE_NAME"
 
@@ -88,6 +89,7 @@ You may add files to `.gh/worktree/templates` which will get copied into new wor
 - `REPO_NAME`: the name of the git repository
 - `REPO_DIR`: the absolute path of the repo / project directory
 - `WORKTREE_NAME`: the name of the new worktree
+- `WORKTREE_NAME_NORMALIZED`: the worktree name with non-alphanumeric characters replaced by dashes (e.g., `feat/some-feature` becomes `feat-some-feature`)
 - `WORKTREE_DIR`: the absolute path of the worktree directory
 
 ## Commands
