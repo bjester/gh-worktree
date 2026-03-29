@@ -110,6 +110,7 @@ class InitCommand(Command):
             with (project_dir / ".git").open("w", encoding="utf-8") as f:
                 f.write("gitdir: ./.bare")
 
+            self._context.reset_properties()
             self._runtime.git.config(
                 "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*"
             )

@@ -1,7 +1,7 @@
 import os
 from contextlib import contextmanager
-from functools import cached_property
 from pathlib import Path
+from typing import Optional
 from typing import Union
 
 from gh_worktree.config import Config
@@ -13,11 +13,14 @@ from gh_worktree.utils import find_up
 class Context(object):
     def __init__(self):
         self.cwd = Path.cwd()
+        self._cached_project_dir: Optional[Path] = None
 
-    @cached_property
+    @property
     def project_dir(self) -> Path:
-        git_bare_dir = find_up(".bare", self.cwd)
-        return git_bare_dir.parent
+        if self._cached_project_dir is None:
+            git_bare_dir = find_up(".bare", self.cwd)
+            self._cached_project_dir = git_bare_dir.parent
+        return self._cached_project_dir
 
     @property
     def config_dir(self) -> Path:
@@ -48,6 +51,10 @@ class Context(object):
         finally:
             os.chdir(old_cwd)
             self.cwd = old_cwd
+
+    def reset_properties(self):
+        """Resets any cached properties"""
+        self._cached_project_dir = None
 
     def assert_within_project(self):
         try:

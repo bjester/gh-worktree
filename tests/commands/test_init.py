@@ -16,6 +16,7 @@ class StubContext:
     def __init__(self, cwd, config_dir):
         self.cwd = cwd
         self.config_dir = config_dir
+        self.reset_called = False
 
     @contextmanager
     def use(self, cwd):
@@ -25,6 +26,9 @@ class StubContext:
             yield
         finally:
             self.cwd = old_cwd
+
+    def reset_properties(self):
+        self.reset_called = True
 
 
 class NormalizeTestCase(TestCase):
@@ -142,6 +146,7 @@ class InitCommandTestCase(TestCase):
 
         gitdir_file = self.tmp_path / self.project_dir / ".git"
         self.assertEqual(gitdir_file.read_text(), "gitdir: ./.bare")
+        self.assertTrue(self.context.reset_called)
         config_file = self.config_dir / "config.json"
         self.assertTrue(config_file.exists())
 
