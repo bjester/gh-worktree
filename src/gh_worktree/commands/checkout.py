@@ -94,7 +94,9 @@ class CheckoutInput(object):
 class CheckoutCommand(Command):
     _name = "checkout"
 
-    def __call__(self, branch_or_pr: str, remote: Optional[str] = None):  # noqa: C901
+    def __call__(
+        self, branch_or_pr: str, remote: Optional[str] = None, yes: bool = False
+    ):  # noqa: C901
         """
         Checkout an existing branch or PR as a worktree.
 
@@ -112,6 +114,8 @@ class CheckoutCommand(Command):
 
         :param branch_or_pr: The branch, PR number, or PR URL to create as a worktree
         :param remote: If `branch_or_pr` is a branch, this may be set to choose the remote to use
+        :param yes: Perform any action automatically without asking (execute new or modified hooks)
+        :type yes: bool
         """
         self._context.assert_within_project()
 
@@ -140,6 +144,7 @@ class CheckoutCommand(Command):
                 inpt.worktree_name,
                 f"{inpt.remote}/{inpt.worktree_name}",
                 normalized_name,
+                bypass_allowlist=yes,
             )
             self._runtime.git.open_worktree(inpt.worktree_name)
             self._runtime.templates.copy(inpt.worktree_name)
@@ -148,4 +153,5 @@ class CheckoutCommand(Command):
                 inpt.worktree_name,
                 f"{inpt.remote}/{inpt.worktree_name}",
                 normalized_name,
+                bypass_allowlist=yes,
             )

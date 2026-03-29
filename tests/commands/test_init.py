@@ -150,11 +150,13 @@ class InitCommandTestCase(TestCase):
             "https://github.com/octo/repo.git",
             self.tmp_path / self.project_dir,
             skip_project=True,
+            bypass_allowlist=False,
         )
         self.hooks.fire.assert_any_call(
             Hook.post_init,
             "https://github.com/octo/repo.git",
             self.tmp_path / self.project_dir,
+            bypass_allowlist=False,
         )
 
     def test_call__installs_hooks(self):
@@ -207,3 +209,21 @@ class InitCommandTestCase(TestCase):
             ".gh/worktree/templates/example.txt"
         )
         self.git.cat_file.assert_not_called()
+
+    def test_call__yes_true_sets_bypass_allowlist_true(self):
+        command = InitCommand(self.runtime)
+        command("octo/repo", str(self.project_dir), yes=True)
+
+        self.hooks.fire.assert_any_call(
+            Hook.pre_init,
+            "https://github.com/octo/repo.git",
+            self.tmp_path / self.project_dir,
+            skip_project=True,
+            bypass_allowlist=True,
+        )
+        self.hooks.fire.assert_any_call(
+            Hook.post_init,
+            "https://github.com/octo/repo.git",
+            self.tmp_path / self.project_dir,
+            bypass_allowlist=True,
+        )

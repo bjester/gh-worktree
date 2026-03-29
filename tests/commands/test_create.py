@@ -51,10 +51,14 @@ class CreateCommandTestCase(TestCase):
         self.git.add_worktree.assert_called_once_with("feature", "origin/main")
         self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(
-            Hook.pre_create, "feature", "origin/main", "feature"
+            Hook.pre_create, "feature", "origin/main", "feature", bypass_allowlist=False
         )
         self.hooks.fire.assert_any_call(
-            Hook.post_create, "feature", "origin/main", "feature"
+            Hook.post_create,
+            "feature",
+            "origin/main",
+            "feature",
+            bypass_allowlist=False,
         )
 
     def test_call__respects_explicit_remote_and_ref(self):
@@ -66,10 +70,18 @@ class CreateCommandTestCase(TestCase):
         self.git.add_worktree.assert_called_once_with("feature", "upstream/dev")
         self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(
-            Hook.pre_create, "feature", "upstream/dev", "feature"
+            Hook.pre_create,
+            "feature",
+            "upstream/dev",
+            "feature",
+            bypass_allowlist=False,
         )
         self.hooks.fire.assert_any_call(
-            Hook.post_create, "feature", "upstream/dev", "feature"
+            Hook.post_create,
+            "feature",
+            "upstream/dev",
+            "feature",
+            bypass_allowlist=False,
         )
 
     def test_call__handles_ref_with_slashes(self):
@@ -83,8 +95,26 @@ class CreateCommandTestCase(TestCase):
         )
         self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(
-            Hook.pre_create, "feature", "upstream/some/nested/branch", "feature"
+            Hook.pre_create,
+            "feature",
+            "upstream/some/nested/branch",
+            "feature",
+            bypass_allowlist=False,
         )
         self.hooks.fire.assert_any_call(
-            Hook.post_create, "feature", "upstream/some/nested/branch", "feature"
+            Hook.post_create,
+            "feature",
+            "upstream/some/nested/branch",
+            "feature",
+            bypass_allowlist=False,
+        )
+
+    def test_call__yes_true_sets_bypass_allowlist_true(self):
+        self.command("feature", yes=True)
+
+        self.hooks.fire.assert_any_call(
+            Hook.pre_create, "feature", "origin/main", "feature", bypass_allowlist=True
+        )
+        self.hooks.fire.assert_any_call(
+            Hook.post_create, "feature", "origin/main", "feature", bypass_allowlist=True
         )
