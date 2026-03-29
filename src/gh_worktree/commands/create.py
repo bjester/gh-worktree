@@ -40,10 +40,9 @@ class CreateCommand(Command):
             git_remote_name, base_ref = base_ref.split("/", 1)
 
         if git_remote_name is None:
-            git_remote = self._runtime.get_remote()
+            git_remote = self._runtime.get_default_remote()
             git_remote_name = git_remote.name
 
-        # self._runtime.git.fetch(git_remote_name, f"{base_ref}:{base_ref}")
         self._runtime.git.fetch(git_remote_name)
 
         normalized_name = normalize_worktree_name(worktree_name)
