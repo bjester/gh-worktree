@@ -8,7 +8,8 @@ from typing import Optional
 from typing import Union
 
 # Simple ANSI colors for the prefix
-COLORS = ["\033[92m", "\033[94m", "\033[95m", "\033[96m", "\033[93m"]
+COLOR_YELLOW = "\033[93m"
+COLORS = ["\033[92m", "\033[94m", "\033[95m", "\033[96m", COLOR_YELLOW]
 COLOR_RESET = "\033[0m"
 
 

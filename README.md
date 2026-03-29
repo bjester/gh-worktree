@@ -170,38 +170,46 @@ Run `gh-worktree` without any arguments for usage information.
 <details>
 <summary><strong><a id="commands-init">init</a></strong> — Initialize a repository for worktrees</summary>
 
-**Spec:** `init <repository_uri> [optional_clone_dir]`
+**Spec:** `init <repository_uri> [optional_clone_dir] [--yes]`
 
 Initializes a repository for use with worktrees. Similar to `git clone` — specify a directory name as the second argument, or it defaults to the repository name.
+
+- `--yes`: Automatically execute new or modified hooks without prompting
 
 </details>
 
 <details>
 <summary><strong><a id="commands-create">create</a></strong> — Create a new worktree</summary>
 
-**Spec:** `create <worktree_name> [base_ref]`
+**Spec:** `create <worktree_name> [base_ref] [--yes]`
 
 Creates a new worktree. Defaults to the default branch of the GitHub repository. Optionally specify a base reference.
+
+- `--yes`: Automatically execute new or modified hooks without prompting
 
 </details>
 
 <details>
 <summary><strong><a id="commands-checkout">checkout</a></strong> — Checkout a PR or branch as a worktree</summary>
 
-**Spec:** `checkout [--remote=<name>] <branch_name|pr_number|pr_url>`
+**Spec:** `checkout [--remote=<name>] [--yes] <branch_name|pr_number|pr_url>`
 
 Quickly create a worktree for a PR or existing branch. Works with fork PRs regardless of remote configuration.
+
+- `--yes`: Automatically execute new or modified hooks without prompting
 
 </details>
 
 <details>
 <summary><strong><a id="commands-remove">remove</a></strong> — Remove a worktree</summary>
 
-**Spec:** `remove [--force] <worktree_name>`
+**Spec:** `remove [--force] [--yes] <worktree_name>`
 
 **Aliases:** `rm`
 
 Removes a worktree. Git refuses to delete worktrees with unmerged commits unless `--force` is used.
+
+- `--yes`: Automatically execute new or modified hooks without prompting
 
 </details>
 

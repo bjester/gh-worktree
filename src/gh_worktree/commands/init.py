@@ -63,7 +63,7 @@ class InitCommand(Command):
 
     _name = "init"
 
-    def __call__(self, repo: str, *destination_dir: Optional[str]):
+    def __call__(self, repo: str, *destination_dir: Optional[str], yes: bool = False):
         """
         Initialize a project for using gh-worktree with it, by cloning the project and configuring
         it to be a bare git repo.
@@ -82,6 +82,8 @@ class InitCommand(Command):
         :type repo: str
         :param destination_dir: The destination directory to clone the project into.
         :type destination_dir: str
+        :param yes: Perform any action automatically without asking (execute new or modified hooks)
+        :type yes: bool
         """
         destination_dir = destination_dir[0] if destination_dir else None
         repo_target = RepositoryTarget(repo, destination_dir=destination_dir)
@@ -101,6 +103,7 @@ class InitCommand(Command):
                 repo_target.uri,
                 project_dir,
                 skip_project=True,
+                bypass_allowlist=yes,
             )
             self._runtime.git.clone(repo_target.uri, ".bare")
 
@@ -134,6 +137,7 @@ class InitCommand(Command):
                 Hook.post_init,
                 repo_target.uri,
                 project_dir,
+                bypass_allowlist=yes,
             )
 
     def _add_hooks(self, config):

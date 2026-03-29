@@ -6,6 +6,8 @@ from enum import Enum
 
 from gh_worktree.context import Context
 from gh_worktree.operator import ConfigOperator
+from gh_worktree.utils import COLOR_RESET
+from gh_worktree.utils import COLOR_YELLOW
 from gh_worktree.utils import stream_exec
 
 
@@ -42,12 +44,20 @@ class Hooks(ConfigOperator):
         super().__init__(context)
         self.dir_name = "hooks"
 
-    def fire(self, hook: Hook, *args, skip_project: bool = False) -> bool:
+    def fire(
+        self,
+        hook: Hook,
+        *args,
+        skip_project: bool = False,
+        bypass_allowlist: bool = False,
+    ) -> bool:
         """
         Fire a hook with given arguments.
         :param hook: The hook to fire
         :param args: The arguments to pass to the hook
         :param skip_project: Whether to skip the project-level hooks
+        :param bypass_allowlist: Whether to bypass the allowlist check
+        :return: Whether the hook was fired
         """
         fired = False
 
@@ -62,7 +72,9 @@ class Hooks(ConfigOperator):
                 print(f"Hook {hook_file_str} is not executable. Skipping.")
                 continue
 
-            if not self._check_allowed(hook_file_str):
+            if not self._check_allowed(
+                hook_file_str, bypass_allowlist=bypass_allowlist
+            ):
                 print(f"Hook {hook_file_str} is not allowed to run. Skipping.")
                 continue
 
@@ -75,10 +87,11 @@ class Hooks(ConfigOperator):
                 )
         return fired
 
-    def _check_allowed(self, hook_file: str) -> bool:
+    def _check_allowed(self, hook_file: str, bypass_allowlist: bool = False) -> bool:
         """
         Check if a hook is allowed to run.
         :param hook_file: The path to the hook file
+        :param bypass_allowlist: Whether to bypass the allowlist check
         :return: Whether the hook is allowed to run
         """
         with open(hook_file, "rb") as f:
@@ -91,7 +104,13 @@ class Hooks(ConfigOperator):
         if hook_file in allowed_hooks and allowed_hooks[hook_file] == checksum:
             return True
 
-        print(f"New hook found: {hook_file}")
+        print(f"New/modified hook found: {hook_file}")
+        if bypass_allowlist:
+            print(
+                f"{COLOR_YELLOW}WARNING! Bypassing allowlist check for {hook_file}{COLOR_RESET}"
+            )
+            return True
+
         response = input("Do you want to allow this hook to run? (y/N): ")
         if response.lower() == "y":
             global_config.allow_hook(hook_file, checksum)

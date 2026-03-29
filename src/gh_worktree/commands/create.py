@@ -8,7 +8,7 @@ from gh_worktree.utils import normalize_worktree_name
 class CreateCommand(Command):
     _name = "create"
 
-    def __call__(self, worktree_name: str, *base_ref: Optional[str]):
+    def __call__(self, worktree_name: str, *base_ref: Optional[str], yes: bool = False):
         """
         Create a new worktree in the current project.
 
@@ -26,6 +26,8 @@ class CreateCommand(Command):
 
         :param worktree_name: The name of the worktree
         :param base_ref: The base reference to create the worktree from
+        :param yes: Perform any action automatically without asking (execute new or modified hooks)
+        :type yes: bool
         """
         base_ref = base_ref[0] if base_ref else None
         self._context.assert_within_project()
@@ -52,6 +54,7 @@ class CreateCommand(Command):
                 worktree_name,
                 f"{git_remote_name}/{base_ref}",
                 normalized_name,
+                bypass_allowlist=yes,
             )
             self._runtime.git.add_worktree(
                 worktree_name, f"{git_remote_name}/{base_ref}"
@@ -62,4 +65,5 @@ class CreateCommand(Command):
                 worktree_name,
                 f"{git_remote_name}/{base_ref}",
                 normalized_name,
+                bypass_allowlist=yes,
             )
