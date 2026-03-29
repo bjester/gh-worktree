@@ -5,75 +5,117 @@
 [![PyPI](https://img.shields.io/pypi/v/gh-worktree.svg?color=blue)](https://pypi.org/project/gh-worktree/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org)
 
+A CLI tool that helps you manage Git worktrees. Built as a GitHub CLI (`gh`) extension, but works standalone.
 
-A CLI tool that helps you manage Git worktrees. This was built as a GitHub CLI (`gh`) extension, but it can be used directly. Although it does rely on the following being available:
-- `git` (obviously)
-- [`gh`](https://cli.github.com/)
+**Dependencies:** `git`, [`gh`](https://cli.github.com/)
+
+---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Capabilities](#capabilities)
+- [How It Works](#how-it-works)
+  - [Directory Structure](#directory-structure)
+  - [Hooks](#hooks)
+  - [Templates](#templates)
+- [Commands](#commands)
+  - [init](#commands-init)
+  - [create](#commands-create)
+  - [checkout](#commands-checkout)
+  - [remove](#commands-remove)
+  - [install](#commands-install)
+  - [version](#commands-version)
+- [Installation](#installation)
+- [AI Disclosure](#ai-disclosure)
+- [License](#license)
+
+---
 
 ## Quick Start
+
 ```bash
 pip install gh-worktree
 ```
-Or
+
+Or with uv:
+
 ```bash
 uvx gh-worktree
 ```
+
 Or download the PEX file from the [releases page](https://github.com/bjester/gh-worktree/releases).
 
-View my recipes for hooks and templates [here](https://github.com/bjester/gh-worktree-recipes).
+See [recipes](https://github.com/bjester/gh-worktree-recipes) for hooks and templates.
 
-## Overview
+---
 
-### Features
-- Bare repository initialization
-- Lifecycle hooks with script checksum validation
-- Global and project configuration
-- Create worktrees from GitHub PRs
-- Project hook and template initialization
-- Worktree templates
-- Terminal autocomplete (coming soon)
-- Feature detection and hook bifurcation (planned)
+## Capabilities
 
-### Details
-When you use `gh-worktree` to initialize a repository for use with worktrees, it uses a bare repository approach, which creates a structure like the following, if you were to clone `gh-worktree`:
+| Feature | Description |
+|---------|-------------|
+| **Bare repository initialization** | Clean separation of git metadata from worktrees |
+| **Lifecycle hooks** | Custom scripts at key points with checksum validation |
+| **Global + project config** | Hooks and templates at both levels |
+| **PR worktrees** | Create worktrees directly from GitHub PRs |
+| **Project bootstrapping** | Auto-copy hooks/templates from repo on init |
+| **Worktree templates** | Pre-configured files copied to new worktrees |
+| **Environment variables** | Template variables with allowlist support |
+
+---
+
+## How It Works
+
+### Directory Structure
+
+After initializing a repository (e.g., `gh-worktree`):
+
 ```
 gh-worktree/
-  .bare/
-  .git # points git to .bare/
+  .bare/                 # Bare git repository
+  .git                   # Points to .bare/
   .gh/
     worktree/
-      hooks/
-      templates/
-      config.json
-```
-When you create new worktrees, they'll be added as directories to the root directory:
-```
-gh-worktree/
-  # ... see above ...
-  my-new-worktree/
+      hooks/             # Project-level hooks
+      templates/         # Project-level templates
+      config.json        # Project configuration
+  my-new-worktree/       # Created worktrees
     README.md
-    # ... etc ...
+    ...
 ```
-When you initialize a new project, if `gh-worktree` detects that `.gh/worktree` exists in the main branch of the repo, it will copy any hooks and/or templates from there to the project repo directory. This project has templates which would get copied if you use `gh-worktree` with it.
 
 ### Hooks
-You may add hooks to `.gh/worktree/hooks` so that you may trigger custom functionality during the lifecycle of your worktrees. The hooks are configurable in the project, but also globally. The first global `.gh/worktree/hooks` found upwards in the directory tree, outside the project directory (i.e. above `gh-worktree/`), will be executed. The following hooks are available:
-- `pre_init`: before initializing a repository for use with worktrees (global only)
-- `post_init`: after initializing a repository for use with worktrees (global only)
-- `pre_checkout`: before a PR or other existing branch is checked out as a worktree
-- `post_checkout`: after a PR or other existing branch is checked out as a worktree
-- `pre_create`: before a new worktree (branch) is created
-- `post_create`: after a new worktree (branch) is created
-- `pre_remove`: before a worktree is removed
-- `post_remove`: after a worktree is removed
 
-For example, you might consider adding a `post_create` hook for this project like:
+Hooks are executable scripts that run at specific lifecycle points. They can be configured at:
+- **Global level**: `~/.gh/worktree/hooks/` (or parent directories outside the project)
+- **Project level**: `.gh/worktree/hooks/` (copied from repo on init if present)
+
+Execution order: global hooks first, then project hooks.
+
+| Hook | Executes At | Description |
+|------|-------------|-------------|
+| `pre_init` | Global only | Before initializing a repository for worktrees |
+| `post_init` | Global + Project | After initializing a repository for worktrees |
+| `pre_checkout` | Global + Project | Before checking out a PR or existing branch as a worktree |
+| `post_checkout` | Global + Project | After checking out a PR or existing branch as a worktree |
+| `pre_create` | Global + Project | Before creating a new worktree (branch) |
+| `post_create` | Global + Project | After creating a new worktree (branch) |
+| `pre_remove` | Global + Project | Before removing a worktree |
+| `post_remove` | Global + Project | After removing a worktree |
+
+Hooks must be executable and allowed (via checksum validation) to run.
+
+<details>
+<summary><strong>Example: post_create hook</strong></summary>
+
+A hook for this project might look something like:
+
 ```bash
 #!/usr/bin/env bash
 
-WORKTREE_NAME="$1"
-BASE_REF="$2" # format: `remote/branch`
-WORKTREE_NAME_NORMALIZED="$3" # WORKTREE_NAME with non-alphanumeric characters replaced by dashes
+WORKTREE_NAME="$1"            # Full worktree name
+BASE_REF="$2"                 # Format: remote/branch
+WORKTREE_NAME_NORMALIZED="$3" # Worktree name with non-alphanumeric characters replaced by dashes
 
 pushd "$WORKTREE_NAME"
 
@@ -84,61 +126,137 @@ prek install -f
 popd
 ```
 
+</details>
+
 ### Templates
-You may add files to `.gh/worktree/templates` which will get copied into new worktrees. The files are copied before the post-hooks are executed. It's a good idea to add these files to the project's `.gitignore`. The files can optionally contain variables that will be replaced during the copy process. The variables should be defined like environment variables: `${ENVVAR_NAME}`. To allowlist environment variables for use in templates, add their names to the `allowed_envvars` list in your global config (probably `~/.gh/worktree/config.json`). The following are variables that are provided by default:
-- `REPO_NAME`: the name of the git repository
-- `REPO_DIR`: the absolute path of the repo / project directory
-- `WORKTREE_NAME`: the name of the new worktree
-- `WORKTREE_NAME_NORMALIZED`: the worktree name with non-alphanumeric characters replaced by dashes (e.g., `feat/some-feature` becomes `feat-some-feature`)
-- `WORKTREE_DIR`: the absolute path of the worktree directory
+
+Files in `.gh/worktree/templates/` are copied to new worktrees before post-hooks execute.
+
+**Tip:** Add template files to `.gitignore`.
+
+Templates support environment variable substitution using `${ENVVAR_NAME}` syntax. Allowlist variable names in `~/.gh/worktree/config.json` under `allowed_envvars`.
+
+**Provided variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `REPO_NAME` | Name of the git repository |
+| `REPO_DIR` | Absolute path of the repo / project directory |
+| `WORKTREE_NAME` | Name of the new worktree |
+| `WORKTREE_NAME_NORMALIZED` | Worktree name with non-alphanumeric chars replaced by dashes |
+| `WORKTREE_DIR` | Absolute path of the worktree directory |
+
+<details>
+<summary><strong>Example: JetBrains project name template</strong></summary>
+
+Set a unique project name per worktree in JetBrains IDEs:
+
+**File:** `.gh/worktree/templates/.idea/.name`
+
+```
+${REPO_NAME}.${WORKTREE_NAME_NORMALIZED}
+```
+
+**Result in worktree:** `.idea/.name` contains `gh-worktree.feat-my-branch`
+
+</details>
+
+---
 
 ## Commands
-You may use `--help` for any command for usage information. To see a list of commands, run `gh-worktree` without any arguments.
 
-### Init
-**Spec: `init <repository_uri> [optional_clone_dir]`**
+Run `gh-worktree` without any arguments for usage information.
 
-Initializes the repository (e.g. `https://github.com/bjester/gh-worktree.git`) for use with this plugin and git worktrees. It's similar to `git clone` in that you can specify a name for the project directory as the second argument, otherwise it uses the repository name.
+<details>
+<summary><strong><a id="commands-init">init</a></strong> — Initialize a repository for worktrees</summary>
 
-### Create
-**Spec: `create <worktree_name> [base_ref]`**
+**Spec:** `init <repository_uri> [optional_clone_dir]`
 
-Creates a new worktree, which by default will be based off the default branch of the GitHub repository that you initialized the project with using `init`.
+Initializes a repository for use with worktrees. Similar to `git clone` — specify a directory name as the second argument, or it defaults to the repository name.
 
-### Checkout
-**Spec: `checkout [--remote=<name>] <branch_name|pr_number|pr_url>`**
+</details>
 
-Similar to how `gh` lets you quickly checkout PRs, this command allows you to quickly create a worktree for a PR. This works even if the PR was opened from a fork of the project, and regardless of whether you've configured the fork as a remote.
+<details>
+<summary><strong><a id="commands-create">create</a></strong> — Create a new worktree</summary>
 
-### Remove
-**Spec: `remove [--force] <worktree_name>`**
+**Spec:** `create <worktree_name> [base_ref]`
 
-Removes a worktree. If git detects the worktree has commits that are unmerged, then it will refuse to delete it. You may use `--force` to passthrough `--force` to git and force the worktree's deletion.
+Creates a new worktree. Defaults to the default branch of the GitHub repository. Optionally specify a base reference.
+
+</details>
+
+<details>
+<summary><strong><a id="commands-checkout">checkout</a></strong> — Checkout a PR or branch as a worktree</summary>
+
+**Spec:** `checkout [--remote=<name>] <branch_name|pr_number|pr_url>`
+
+Quickly create a worktree for a PR or existing branch. Works with fork PRs regardless of remote configuration.
+
+</details>
+
+<details>
+<summary><strong><a id="commands-remove">remove</a></strong> — Remove a worktree</summary>
+
+**Spec:** `remove [--force] <worktree_name>`
+
+**Aliases:** `rm`
+
+Removes a worktree. Git refuses to delete worktrees with unmerged commits unless `--force` is used.
+
+</details>
+
+<details>
+<summary><strong><a id="commands-install">install</a></strong> — Install gh-worktree</summary>
+
+**Spec:** `install [--alias=<name>] [--gh-ext] [--path-bin] [--force]`
+
+Installs gh-worktree as a GitHub CLI extension or to your PATH. Without options, prompts for installation method.
+
+- `--gh-ext`: Install as `gh` extension
+- `--path-bin`: Install to `~/.local/bin` or `~/bin`
+- `--alias`: Custom name (e.g., `wktr`)
+- `--force`: Overwrite existing installation
+
+</details>
+
+<details>
+<summary><strong><a id="commands-version">version</a></strong> — Show version</summary>
+
+**Spec:** `version`
+
+Outputs the installed version of gh-worktree.
+
+</details>
+
+---
 
 ## Installation
-Most GitHub extensions are precompiled Go or Node.js executables, but you can use this standalone. `gh-worktree` has only been tested on Linux so far. If you have python 3.10+ installed, the PEX file is a great option.
+
+Tested on Linux. Requires Python 3.10+ for PEX.
 
 ### As a GitHub CLI extension (`gh`)
-The following will copy the binary to `~/.local/share/gh/extensions/gh-worktree/gh-worktree`. You can also use the PEX file, just remove the extension before step 3.
-1. Download the [latest release's](https://github.com/bjester/gh-worktree/releases) binary file.
-2. Ensure it's executable: `chmod +x gh-worktree`
-3. Execute the following: `./gh-worktree install --gh-ext`
-4. Test it: `gh worktree`
+
+1. Download the [latest release](https://github.com/bjester/gh-worktree/releases) binary.
+2. Make executable: `chmod +x gh-worktree`
+3. Install: `./gh-worktree install --gh-ext`
+4. Test: `gh worktree`
 
 ### Standalone
-1. Download the [latest release's](https://github.com/bjester/gh-worktree/releases) binary or PEX file.
-2. Ensure it's executable: `chmod +x gh-worktree*`
-3. Execute the following: `./gh-worktree install --path-bin` or `./gh-worktree.pex install --path-bin`
-4. Test it: `gh-worktree version`
+
+1. Download the [latest release](https://github.com/bjester/gh-worktree/releases) binary or PEX.
+2. Make executable: `chmod +x gh-worktree*`
+3. Install: `./gh-worktree install --path-bin` or `./gh-worktree.pex install --path-bin`
+4. Test: `gh-worktree version`
 
 ### Aliasing
-Use the `--alias` flag to change the name for either of the above options:
+
 ```bash
 ./gh-worktree install --alias=wktr --path-bin
 wktr version
 ```
 
 ### From source
+
 ```bash
 git clone https://github.com/bjester/gh-worktree.git
 cd gh-worktree
@@ -149,8 +267,14 @@ make dist/gh-worktree
 ./dist/gh-worktree install --path-bin
 ```
 
+---
+
 ## AI Disclosure
+
 LLMs were used in the development of this project, mostly for brainstorming and bootstrapping code, particularly tests. The contribution proportion is roughly 80 / 20, human and AI code respectively. This may change over time as I try out agents!
 
+---
+
 ## License
+
 [MIT](LICENSE) :: Copyright 2026 Blaine Jester
