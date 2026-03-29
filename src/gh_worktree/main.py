@@ -32,7 +32,6 @@ class WorktreeCommands(Command):
 
         :param command: The command instance
         """
-        setattr(self, command._name, command)
         setattr(self, command._name, command.__call__)
         for alias in command._aliases:
             setattr(self, alias, command.__call__)

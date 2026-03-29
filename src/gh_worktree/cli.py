@@ -3,4 +3,6 @@ from gh_worktree.main import WorktreeCommands
 
 
 def main():
-    fire.Fire(WorktreeCommands, name="worktree")
+    """CLI tool for managing Git worktrees"""
+    commands = WorktreeCommands()
+    fire.Fire(commands)
