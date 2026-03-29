@@ -39,6 +39,7 @@ class CreateCommandTestCase(TestCase):
             git=self.git,
             templates=self.templates,
             get_remote=Mock(return_value=GitRemote("origin", "uri", "fetch")),
+            get_default_remote=Mock(return_value=GitRemote("upstream", "uri", "fetch")),
         )
         self.command = CreateCommand(self.runtime)
 
@@ -46,40 +47,68 @@ class CreateCommandTestCase(TestCase):
         self.command("feature")
 
         self.assertTrue(self.context.assert_called)
-        self.runtime.get_remote.assert_called_once_with()
-        self.git.fetch.assert_called_once_with("origin")
-        self.git.add_worktree.assert_called_once_with("feature", "origin/main")
+        self.runtime.get_default_remote.assert_called_once_with()
+        self.git.fetch.assert_called_once_with("upstream")
+        self.git.add_worktree.assert_called_once_with("feature", "upstream/main")
         self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(
-            Hook.pre_create, "feature", "origin/main", "feature", bypass_allowlist=False
+            Hook.pre_create,
+            "feature",
+            "upstream/main",
+            "feature",
+            bypass_allowlist=False,
         )
         self.hooks.fire.assert_any_call(
             Hook.post_create,
             "feature",
-            "origin/main",
+            "upstream/main",
+            "feature",
+            bypass_allowlist=False,
+        )
+
+    def test_call__uses_default_remote(self):
+        self.command("feature", "release-x")
+
+        self.assertTrue(self.context.assert_called)
+        self.runtime.get_default_remote.assert_called_once_with()
+        self.git.fetch.assert_called_once_with("upstream")
+        self.git.add_worktree.assert_called_once_with("feature", "upstream/release-x")
+        self.templates.copy.assert_called_once_with("feature")
+        self.hooks.fire.assert_any_call(
+            Hook.pre_create,
+            "feature",
+            "upstream/release-x",
+            "feature",
+            bypass_allowlist=False,
+        )
+        self.hooks.fire.assert_any_call(
+            Hook.post_create,
+            "feature",
+            "upstream/release-x",
             "feature",
             bypass_allowlist=False,
         )
 
     def test_call__respects_explicit_remote_and_ref(self):
-        self.command("feature", "upstream/dev")
+        self.command("feature", "alt/dev")
 
         self.assertTrue(self.context.assert_called)
         self.runtime.get_remote.assert_not_called()
-        self.git.fetch.assert_called_once_with("upstream")
-        self.git.add_worktree.assert_called_once_with("feature", "upstream/dev")
+        self.runtime.get_default_remote.assert_not_called()
+        self.git.fetch.assert_called_once_with("alt")
+        self.git.add_worktree.assert_called_once_with("feature", "alt/dev")
         self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(
             Hook.pre_create,
             "feature",
-            "upstream/dev",
+            "alt/dev",
             "feature",
             bypass_allowlist=False,
         )
         self.hooks.fire.assert_any_call(
             Hook.post_create,
             "feature",
-            "upstream/dev",
+            "alt/dev",
             "feature",
             bypass_allowlist=False,
         )
@@ -113,8 +142,16 @@ class CreateCommandTestCase(TestCase):
         self.command("feature", yes=True)
 
         self.hooks.fire.assert_any_call(
-            Hook.pre_create, "feature", "origin/main", "feature", bypass_allowlist=True
+            Hook.pre_create,
+            "feature",
+            "upstream/main",
+            "feature",
+            bypass_allowlist=True,
         )
         self.hooks.fire.assert_any_call(
-            Hook.post_create, "feature", "origin/main", "feature", bypass_allowlist=True
+            Hook.post_create,
+            "feature",
+            "upstream/main",
+            "feature",
+            bypass_allowlist=True,
         )
