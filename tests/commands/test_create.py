@@ -94,6 +94,7 @@ class CreateCommandTestCase(TestCase):
 
         self.assertTrue(self.context.assert_called)
         self.runtime.get_remote.assert_not_called()
+        self.runtime.get_default_remote.assert_not_called()
         self.git.fetch.assert_called_once_with("alt")
         self.git.add_worktree.assert_called_once_with("feature", "alt/dev")
         self.templates.copy.assert_called_once_with("feature")
