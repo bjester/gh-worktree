@@ -15,22 +15,32 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v6
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          ignore-nothing-to-cache: true
+
       - name: Set up Python
         run: uv python install
+
       - name: Build
         run: make build
+
       - name: Upload PEX to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/*.pex
+
       - name: Upload Binary to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/gh-worktree
+
       - name: Remove PEX and Binary
         run: rm -f dist/*.pex dist/gh-worktree
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
