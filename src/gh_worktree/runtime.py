@@ -1,4 +1,5 @@
 from gh_worktree.context import Context
+from gh_worktree.errors import RemoteUsageError
 from gh_worktree.gh import GithubCLI
 from gh_worktree.git import GitCLI, GitRemote
 from gh_worktree.hooks import Hooks
@@ -27,7 +28,7 @@ class Runtime:
             # forks could be renamed, but we're not gonna worry about that for now
             remote_ref = f"{owner_name}/{config.name}"
         elif not name:
-            raise ValueError("Must provide either owner_name or name")
+            raise RemoteUsageError("Must provide either owner_name or name")
 
         for remote in self.git.remote():
             if remote.type != "fetch":

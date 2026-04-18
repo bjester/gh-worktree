@@ -1,5 +1,7 @@
 import json
 
+from gh_worktree.errors import ConfigTypeError
+
 
 class Config:
     type: str
@@ -18,7 +20,7 @@ class Config:
         config = cls()
         config_data = json.load(fd)
         if config_data["type"] != cls.type:
-            raise ValueError(f"Invalid config type: {config_data['type']}")
+            raise ConfigTypeError(f"Invalid config type: {config_data['type']}")
         config._data = config_data
         return config
 

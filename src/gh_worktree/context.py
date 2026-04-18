@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from gh_worktree.config import Config, GlobalConfig, RepositoryConfig
+from gh_worktree.errors import AncestorNotFoundError, ConfigTypeError, ProjectNotFoundError
 from gh_worktree.utils import find_up
 
 
@@ -26,13 +27,13 @@ class Context:
     def global_config_dir(self) -> Path:
         try:
             parent_dir = self.project_dir.parent
-        except RuntimeError:
+        except AncestorNotFoundError:
             parent_dir = self.cwd.parent
 
         try:
             closest_gh_dir = find_up(".gh", parent_dir)
             return closest_gh_dir / "worktree"
-        except RuntimeError:
+        except AncestorNotFoundError:
             # default to ~/.gh/worktree
             return Path.home() / ".gh" / "worktree"
 
@@ -55,8 +56,8 @@ class Context:
     def assert_within_project(self):
         try:
             find_up(".bare", self.cwd)
-        except RuntimeError as e:
-            raise AssertionError("Project not found") from e
+        except AncestorNotFoundError as e:
+            raise ProjectNotFoundError("Project not found") from e
 
     def get_config(self) -> RepositoryConfig:
         file_path = self.config_dir / "config.json"
@@ -80,7 +81,7 @@ class Context:
         elif isinstance(config, GlobalConfig):
             config_dir = self.global_config_dir
         else:
-            raise ValueError(f"Unknown config type: {type(config)}")
+            raise ConfigTypeError(f"Unknown config type: {type(config)}")
 
         config_dir.mkdir(parents=True, exist_ok=True)
         with (config_dir / "config.json").open("w", encoding="utf-8") as f:

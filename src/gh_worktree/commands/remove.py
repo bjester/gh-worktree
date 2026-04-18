@@ -1,4 +1,5 @@
 from gh_worktree.command import Command
+from gh_worktree.errors import WorktreeNotFoundError
 from gh_worktree.hooks import Hook
 from gh_worktree.utils import normalize_worktree_name
 
@@ -27,7 +28,7 @@ class RemoveCommand(Command):
         """
         project_dir = self._context.project_dir
         if not (project_dir / worktree_name).exists():
-            raise ValueError(f"Worktree {worktree_name} does not exist")
+            raise WorktreeNotFoundError(f"Worktree {worktree_name} does not exist")
 
         normalized_name = normalize_worktree_name(worktree_name)
 
