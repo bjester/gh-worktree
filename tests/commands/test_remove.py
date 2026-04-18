@@ -53,12 +53,8 @@ class RemoveCommandTestCase(TestCase):
         command("feature", force=True)
 
         git.remove_worktree.assert_called_once_with("feature", force=True)
-        hooks.fire.assert_any_call(
-            Hook.pre_remove, "feature", "feature", bypass_allowlist=False
-        )
-        hooks.fire.assert_any_call(
-            Hook.post_remove, "feature", "feature", bypass_allowlist=False
-        )
+        hooks.fire.assert_any_call(Hook.pre_remove, "feature", "feature", bypass_allowlist=False)
+        hooks.fire.assert_any_call(Hook.post_remove, "feature", "feature", bypass_allowlist=False)
 
     def test_call__yes_true_sets_bypass_allowlist_true(self):
         project_dir = self.tmp_path / "project"
@@ -73,9 +69,5 @@ class RemoveCommandTestCase(TestCase):
         command = RemoveCommand(runtime)
         command("feature", yes=True)
 
-        hooks.fire.assert_any_call(
-            Hook.pre_remove, "feature", "feature", bypass_allowlist=True
-        )
-        hooks.fire.assert_any_call(
-            Hook.post_remove, "feature", "feature", bypass_allowlist=True
-        )
+        hooks.fire.assert_any_call(Hook.pre_remove, "feature", "feature", bypass_allowlist=True)
+        hooks.fire.assert_any_call(Hook.post_remove, "feature", "feature", bypass_allowlist=True)

@@ -1,18 +1,15 @@
 import re
 from collections import namedtuple
-from typing import List
-from typing import Optional
 
 from gh_worktree.context import Context
-from gh_worktree.utils import iter_output
-from gh_worktree.utils import stream_exec
+from gh_worktree.utils import iter_output, stream_exec
 
 TYPE_RE = re.compile(r"\((.*)\)")
 
 GitRemote = namedtuple("GitRemote", ["name", "uri", "type"])
 
 
-class GitCLI(object):
+class GitCLI:
     def __init__(self, context: Context):
         self.context = context
 
@@ -24,8 +21,7 @@ class GitCLI(object):
             )
 
     def _iter_output(self, *command: str):
-        for line in iter_output(["git", *command], cwd=self.context.cwd):
-            yield line
+        yield from iter_output(["git", *command], cwd=self.context.cwd)
 
     def clone(self, src: str, destination_dir: str):
         self._stream_exec("clone", "--bare", src, destination_dir)
@@ -34,20 +30,18 @@ class GitCLI(object):
         self._stream_exec("config", config_option, config_value)
 
     def ls_tree(self, branch_name: str, file_path: str):
-        for line in self._iter_output("ls-tree", "-r", branch_name, "--", file_path):
-            yield line
+        yield from self._iter_output("ls-tree", "-r", branch_name, "--", file_path)
 
     def cat_file(self, branch_name: str, file_path: str):
-        for line in self._iter_output("cat-file", "-p", f"{branch_name}:{file_path}"):
-            yield line
+        yield from self._iter_output("cat-file", "-p", f"{branch_name}:{file_path}")
 
-    def fetch(self, remote: Optional[str] = "origin", refspec: Optional[str] = None):
+    def fetch(self, remote: str | None = "origin", refspec: str | None = None):
         if refspec is not None:
             self._stream_exec("fetch", remote, refspec)
         else:
             self._stream_exec("fetch", remote)
 
-    def remote(self) -> List[GitRemote]:
+    def remote(self) -> list[GitRemote]:
         remotes = []
         for line in self._iter_output("remote", "-v"):
             name, uri_ref = line.split("\t")

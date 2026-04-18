@@ -1,12 +1,10 @@
 import json
 import subprocess
-from typing import Optional
-from typing import Union
 
 from gh_worktree.context import Context
 
 
-class GithubCLI(object):
+class GithubCLI:
     def __init__(self, context: Context):
         self.context = context
 
@@ -20,7 +18,7 @@ class GithubCLI(object):
         )
         return result.stdout.strip()
 
-    def pr_status(self, pr_number: Union[int, str], owner_repo: Optional[str] = None):
+    def pr_status(self, pr_number: int | str, owner_repo: str | None = None):
         fields = [
             "number",
             "author",

@@ -3,13 +3,10 @@ import os
 import stat
 import tempfile
 from pathlib import Path
-from unittest import mock
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from gh_worktree.context import Context
-from gh_worktree.hooks import Hook
-from gh_worktree.hooks import HookExists
-from gh_worktree.hooks import Hooks
+from gh_worktree.hooks import Hook, HookExists, Hooks
 
 
 class HooksTestCase(TestCase):
@@ -39,7 +36,7 @@ class HooksTestCase(TestCase):
         global_config.allow_hook(str(hook_file), checksum)
         self.context.set_config(global_config)
 
-        self.assertTrue(self.hooks._check_allowed(str(hook_file)))
+        self.assertTrue(self.hooks._check_allowed(hook_file))
 
         mock_input.assert_not_called()
         global_config = self.context.get_global_config()
@@ -53,7 +50,7 @@ class HooksTestCase(TestCase):
 
         mock_input.return_value = "y"
 
-        self.assertTrue(self.hooks._check_allowed(str(hook_file)))
+        self.assertTrue(self.hooks._check_allowed(hook_file))
 
         mock_input.assert_called_once()
         global_config = self.context.get_global_config()
@@ -71,9 +68,7 @@ class HooksTestCase(TestCase):
         mock_stream_exec.return_value = 0
 
         self.assertTrue(self.hooks.fire(Hook.pre_init, "arg1"))
-        mock_stream_exec.assert_called_once_with(
-            [str(hook_file), "arg1"], cwd=self.tmp_path
-        )
+        mock_stream_exec.assert_called_once_with([str(hook_file), "arg1"], cwd=self.tmp_path)
 
     @mock.patch("gh_worktree.hooks.Hooks._check_allowed")
     @mock.patch("gh_worktree.hooks.stream_exec")

@@ -39,9 +39,7 @@ class Templates(ConfigOperator):
         self.replacement_map["REPO_NAME"] = config.name
         self.replacement_map["REPO_DIR"] = str(self.context.project_dir)
         self.replacement_map["WORKTREE_NAME"] = worktree_name
-        self.replacement_map["WORKTREE_NAME_NORMALIZED"] = normalize_worktree_name(
-            worktree_name
-        )
+        self.replacement_map["WORKTREE_NAME_NORMALIZED"] = normalize_worktree_name(worktree_name)
         self.replacement_map["WORKTREE_DIR"] = str(worktree_dir)
 
         for templates_dir in self.iter_config_dirs():

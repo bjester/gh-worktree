@@ -3,9 +3,6 @@ import re
 import shlex
 import subprocess
 from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Union
 
 # Simple ANSI colors for the prefix
 COLOR_YELLOW = "\033[93m"
@@ -13,7 +10,7 @@ COLORS = ["\033[92m", "\033[94m", "\033[95m", "\033[96m", COLOR_YELLOW]
 COLOR_RESET = "\033[0m"
 
 
-def find_up(name: str, start_path: Union[str, Path]) -> Path:
+def find_up(name: str, start_path: str | Path) -> Path:
     """
     Looks upward for a directory that has file or directory with `name`
     :param name: The name of the file or directory to look for
@@ -33,7 +30,7 @@ def find_up(name: str, start_path: Union[str, Path]) -> Path:
     raise RuntimeError(f"Could not find {name} in {start_path} ancestors")
 
 
-def _log_prefix(command: List[str]) -> str:
+def _log_prefix(command: list[str]) -> str:
     """
     Returns a prefix string for visibility, via logging, into the command being executed
     :param command: The command list to be executed
@@ -47,9 +44,7 @@ def _log_prefix(command: List[str]) -> str:
     return shlex.join(command_prefix)
 
 
-def stream_exec(
-    command: List[str], wait_time: int = 60, cwd: Optional[Union[str, Path]] = None
-) -> int:
+def stream_exec(command: list[str], wait_time: int = 60, cwd: str | Path | None = None) -> int:
     """
     Executes a command in a subprocess and streams its output to stdout.
     :param command: The command to execute as a list of strings
@@ -95,9 +90,7 @@ def normalize_worktree_name(name: str) -> str:
     return result
 
 
-def iter_output(
-    command: List[str], wait_time: int = 60, cwd: Optional[Union[str, Path]] = None
-):
+def iter_output(command: list[str], wait_time: int = 60, cwd: str | Path | None = None):
     """
     Executes a command in a subprocess and iterates its output after completion
     :param command: The command to execute as a list of strings

@@ -5,14 +5,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from gh_worktree.templates import TemplateExists
-from gh_worktree.templates import Templates
+from gh_worktree.templates import TemplateExists, Templates
 
 
 class StubContext:
-    def __init__(
-        self, project_dir, config, global_config, config_dir, global_config_dir
-    ):
+    def __init__(self, project_dir, config, global_config, config_dir, global_config_dir):
         self.project_dir = project_dir
         self._config = config
         self._global_config = global_config
@@ -47,9 +44,7 @@ class TemplatesTestCase(unittest.TestCase):
             "REPO: $REPO_NAME\nWORKTREE: $WORKTREE_NAME\n"
         )
 
-        (self.project_templates_dir / "env.txt").write_text(
-            "PATH: $WORKTREE_DIR\nUSER: $USER\n"
-        )
+        (self.project_templates_dir / "env.txt").write_text("PATH: $WORKTREE_DIR\nUSER: $USER\n")
 
         # Create a subdirectory with a template
         subdir = self.project_templates_dir / "subdir"

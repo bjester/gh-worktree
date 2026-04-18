@@ -1,17 +1,15 @@
-from typing import List
-
 from gh_worktree.context import Context
 from gh_worktree.runtime import Runtime
 
 
-class BaseCommand(object):
+class BaseCommand:
     def __init__(self):
         pass
 
 
 class Command(BaseCommand):
     _name: str
-    _aliases: List[str] = []
+    _aliases: list[str] = []
 
     def __init__(self, runtime: Runtime):
         super().__init__()

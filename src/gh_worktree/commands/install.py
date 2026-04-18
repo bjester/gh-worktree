@@ -3,9 +3,6 @@ import shutil
 import stat
 import sys
 from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 from gh_worktree.command import Command
 
@@ -15,7 +12,7 @@ class InstallCommand(Command):
 
     def __call__(
         self,
-        alias: Optional[str] = None,
+        alias: str | None = None,
         gh_ext: bool = False,
         path_bin: bool = False,
         force: bool = False,
@@ -67,9 +64,7 @@ class InstallCommand(Command):
                 Path.home() / "bin",
             ]
 
-            install_dir = next(
-                (d for d in preferred_install_dirs if str(d) in path_dirs), None
-            )
+            install_dir = next((d for d in preferred_install_dirs if str(d) in path_dirs), None)
 
             if not install_dir:
                 print("Could not find a suitable user binary directory in your PATH.")
@@ -82,36 +77,32 @@ class InstallCommand(Command):
     def _run(
         self,
         current_script_path: Path,
-        target_paths: List[Path],
+        target_paths: list[Path],
         should_link: bool,
         force: bool,
     ):
         for target_path in target_paths:
             if target_path.exists() or target_path.is_symlink():
                 if not force:
-                    print(
-                        f"Path already exists, use --force to overwrite: {target_path}"
-                    )
+                    print(f"Path already exists, use --force to overwrite: {target_path}")
                     sys.exit(1)
                 target_path.unlink(True)
 
             target_path.parent.mkdir(parents=True, exist_ok=True)
 
             if should_link:
-                os.symlink(current_script_path, target_path)
+                target_path.symlink_to(current_script_path)
             else:
                 shutil.copy(current_script_path, target_path)
                 target_path.chmod(target_path.stat().st_mode | stat.S_IEXEC)
             print(f"Installed to {target_path}")
 
-    def _ask(self, target_name: str, gh_ext: bool, path_bin: bool) -> Tuple[bool, bool]:
+    def _ask(self, target_name: str, gh_ext: bool, path_bin: bool) -> tuple[bool, bool]:
         # ask user what path they would like to use for installation, without these args
         if not gh_ext and not path_bin:
             print("Tip: Re-run this with --alias to change the name\n")
             print("Which method do you want to use?")
-            print(
-                f"\t1. As a GitHub CLI (gh) extension: gh {target_name.replace('gh-', '')}"
-            )
+            print(f"\t1. As a GitHub CLI (gh) extension: gh {target_name.replace('gh-', '')}")
             print(f"\t2. In your PATH: {target_name}\n")
 
             choice = input("Your choice (1, 2): ")

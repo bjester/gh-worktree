@@ -2,8 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
-from unittest import mock
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from gh_worktree.gh import GithubCLI
 
