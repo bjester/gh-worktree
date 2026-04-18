@@ -1,6 +1,6 @@
 [project]
 name = "gh-worktree"
-version = "0.3.1"
+version = "0.3.2"
 description = "github CLI extension for worktrees"
 readme = "README.md"
 authors = [
