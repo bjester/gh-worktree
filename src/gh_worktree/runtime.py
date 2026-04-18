@@ -7,9 +7,13 @@ from gh_worktree.templates import Templates
 
 
 class Runtime:
-    __slots__ = ("context", "hooks", "git", "gh", "templates")
+    __slots__ = ("verbose", "context", "hooks", "git", "gh", "templates")
 
-    def __init__(self):
+    def __init__(self, verbose: bool = False):
+        """
+        :param verbose: Whether to enable logging verbosity
+        """
+        self.verbose = verbose
         self.context = Context()
         self.hooks = Hooks(self.context)
         self.git = GitCLI(self.context)

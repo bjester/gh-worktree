@@ -19,8 +19,11 @@ class WorktreeCommands(Command):
 
     _name = "gh-worktree"
 
-    def __init__(self):
-        runtime = Runtime()
+    def __init__(self, verbose: bool = False):
+        """
+        :param verbose: Whether to enable logging verbosity
+        """
+        runtime = Runtime(verbose)
         super().__init__(runtime)
         self._commands: list[Command] = []
         self._add(CreateCommand(self._runtime))
