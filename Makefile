@@ -11,7 +11,7 @@ dist/gh-worktree:
 	uv run pyinstaller gh-worktree.spec
 
 dist/gh-worktree.pex:
-	uv tool run pex==2.88.1 -v . -e gh_worktree.cli:main -o dist/gh-worktree.pex
+	uv run pex -v . -e gh_worktree.cli:main -o dist/gh-worktree.pex
 
 build-whl:
 	uv build --wheel --out-dir ./dist

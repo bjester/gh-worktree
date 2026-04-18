@@ -43,6 +43,7 @@ dev = [
     "prek",
     "pyinstaller",
     "ruff>=0.15.11",
+    "pex>=2.88.1"
 ]
 
 [build-system]
