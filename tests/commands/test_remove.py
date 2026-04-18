@@ -6,6 +6,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from gh_worktree.commands.remove import RemoveCommand
+from gh_worktree.errors import WorktreeNotFoundError
 from gh_worktree.hooks import Hook
 
 
@@ -36,7 +37,7 @@ class RemoveCommandTestCase(TestCase):
 
         command = RemoveCommand(runtime)
 
-        with self.assertRaisesRegex(ValueError, "Worktree missing does not exist"):
+        with self.assertRaisesRegex(WorktreeNotFoundError, "Worktree missing does not exist"):
             command("missing")
 
     def test_call__runs_hooks_and_git(self):

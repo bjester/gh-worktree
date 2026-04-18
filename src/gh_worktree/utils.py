@@ -4,6 +4,8 @@ import shlex
 import subprocess
 from pathlib import Path
 
+from gh_worktree.errors import AncestorNotFoundError
+
 # Simple ANSI colors for the prefix
 COLOR_YELLOW = "\033[93m"
 COLORS = ["\033[92m", "\033[94m", "\033[95m", "\033[96m", COLOR_YELLOW]
@@ -27,7 +29,7 @@ def find_up(name: str, start_path: str | Path) -> Path:
             break
         search_path = search_path.parent
 
-    raise RuntimeError(f"Could not find {name} in {start_path} ancestors")
+    raise AncestorNotFoundError(f"Could not find {name} in {start_path} ancestors")
 
 
 def _log_prefix(command: list[str]) -> str:

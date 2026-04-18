@@ -3,6 +3,7 @@ from urllib import parse
 
 from gh_worktree.command import Command
 from gh_worktree.config import RepositoryConfig
+from gh_worktree.errors import ProjectExistsError, RepositoryPathError
 from gh_worktree.hooks import Hook, HookExists
 from gh_worktree.templates import TemplateExists
 
@@ -13,7 +14,7 @@ GIT_EXT_RE = re.compile(r"\.git$")
 def normalize(repo: str):
     if not repo.startswith("http") and not repo.startswith("git@"):
         if not JUST_PATH_RE.match(repo):
-            raise ValueError("Invalid repository path format. Expected: {owner}/{repo}")
+            raise RepositoryPathError("Invalid repository path format. Expected: {owner}/{repo}")
         repo = f"https://github.com/{repo}"
 
     if not repo.endswith(".git"):
@@ -30,7 +31,7 @@ class RepositoryTarget:
     def validate(self):
         path_parts = self.path.split("/")
         if len(path_parts) != 2:
-            raise ValueError(f"Invalid repository path: {self.path}")
+            raise RepositoryPathError(f"Invalid repository path: {self.path}")
 
     @property
     def path(self):
@@ -90,7 +91,7 @@ class InitCommand(Command):
 
         if project_dir.exists():
             # this would be problematic!
-            raise AssertionError(f"Project directory {project_dir} already exists")
+            raise ProjectExistsError(f"Project directory {project_dir} already exists")
 
         project_dir.mkdir(parents=True, exist_ok=True)
 

@@ -6,7 +6,8 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from gh_worktree.context import Context
-from gh_worktree.hooks import Hook, HookExists, Hooks
+from gh_worktree.errors import HookExistsError
+from gh_worktree.hooks import Hook, Hooks
 
 
 class HooksTestCase(TestCase):
@@ -110,6 +111,6 @@ class HooksTestCase(TestCase):
         hook_file = self.hooks_path / Hook.pre_init.name
         hook_file.write_bytes(b"echo ok")
 
-        with self.assertRaises(HookExists):
+        with self.assertRaises(HookExistsError):
             with self.hooks.add(Hook.pre_init) as f:
                 f.write("echo ok")

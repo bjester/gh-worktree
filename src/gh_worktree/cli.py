@@ -22,10 +22,46 @@ def replace_alias(cli: WorktreeCommands):
         sys.argv[1] = cli._alias_map[subcommand]
 
 
+def replace_verbose():
+    """
+    Parses command-line arguments to determine if the verbose mode is enabled.
+
+    This function searches arguments before the passthrough separator (`--`) for
+    verbose flags (`-v` and `--verbose`). Matching flags are removed from
+    `sys.argv`, and verbose mode is considered enabled.
+
+    :return: A boolean indicating whether verbose mode is enabled.
+    """
+    is_verbose = False
+
+    passthrough_index = sys.argv.index("--") if "--" in sys.argv else len(sys.argv)
+    kept_args = [sys.argv[0]]
+
+    for arg in sys.argv[1:passthrough_index]:
+        if arg in ("-v", "--verbose"):
+            is_verbose = True
+            continue
+        kept_args.append(arg)
+
+    if passthrough_index < len(sys.argv):
+        kept_args.extend(sys.argv[passthrough_index:])
+
+    sys.argv[:] = kept_args
+    return is_verbose
+
+
 def main():
     """CLI tool for managing Git worktrees"""
-    component = WorktreeCommands()
+    is_verbose = replace_verbose()
+    component = WorktreeCommands(verbose=is_verbose)
     replace_alias(component)
-    # we do not pass `name` here, because the CLI allows using an alias for the command. if name
-    # was passed, then using `worktree -- --completion` would use the wrong name for completion
-    fire.Fire(component=component)
+
+    try:
+        # we do not pass `name` here, because the CLI allows using an alias for the command. if name
+        # was passed, then using `worktree -- --completion` would use the wrong name for completion
+        fire.Fire(component=component)
+    except Exception as e:
+        if is_verbose:
+            raise
+        print(f"\033[91m\nCommand failed: {str(e)}\033[0m")
+        sys.exit(1)

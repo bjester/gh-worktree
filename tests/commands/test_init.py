@@ -6,6 +6,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
 from gh_worktree.commands.init import InitCommand, RepositoryTarget, normalize
+from gh_worktree.errors import RepositoryPathError
 from gh_worktree.hooks import Hook
 
 
@@ -45,7 +46,7 @@ class NormalizeTestCase(TestCase):
         )
 
     def test_invalid_repo(self):
-        with self.assertRaisesRegex(ValueError, "Invalid repository path format"):
+        with self.assertRaisesRegex(RepositoryPathError, "Invalid repository path format"):
             normalize("not a repo")
 
 
@@ -56,7 +57,9 @@ class RepositoryTargetTestCase(TestCase):
 
     def test_validate__invalid_path(self):
         target = RepositoryTarget("https://github.com/octo/repo/pull/123.git")
-        with self.assertRaises(ValueError, msg="Invalid repository path: octo/repo/pull/123"):
+        with self.assertRaises(
+            RepositoryPathError, msg="Invalid repository path: octo/repo/pull/123"
+        ):
             target.validate()
 
     def test_path__url(self):

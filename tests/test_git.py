@@ -2,6 +2,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, mock
 
+from gh_worktree.errors import CommandError, WorktreeNameError
 from gh_worktree.git import GitCLI, GitRemote
 
 
@@ -25,7 +26,7 @@ class GitCLITestCase(TestCase):
 
     def test_stream_exec__fail(self):
         self.mock_stream_exec.return_value = 1
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(CommandError):
             self.cli._stream_exec("foo", "bar")
         self.mock_stream_exec.assert_called_once_with(["git", "foo", "bar"], cwd=Path("/test/tmp"))
 
@@ -119,9 +120,9 @@ class GitCLITestCase(TestCase):
         )
 
     def test_open_worktree_validation(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(WorktreeNameError):
             self.cli.open_worktree("../outside")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(WorktreeNameError):
             self.cli.open_worktree("/absolute")
 
     def test_remove_worktree(self):

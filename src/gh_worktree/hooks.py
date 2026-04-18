@@ -6,6 +6,7 @@ from enum import Enum
 from pathlib import Path
 
 from gh_worktree.context import Context
+from gh_worktree.errors import HookError, HookExistsError
 from gh_worktree.operator import ConfigOperator
 from gh_worktree.utils import COLOR_RESET, COLOR_YELLOW, stream_exec
 
@@ -25,7 +26,7 @@ class Hook(Enum):
         return f".gh/worktree/hooks/{self.name}"
 
 
-class HookExists(Exception):
+class HookExists(HookExistsError):
     pass
 
 
@@ -79,7 +80,7 @@ class Hooks(ConfigOperator):
             command_args = [hook_file_str, *[str(arg) for arg in args]]
             return_status = stream_exec(command_args, cwd=self.context.cwd)
             if return_status != 0:
-                raise RuntimeError(f"Hook {hook.name} failed with exit code {return_status}")
+                raise HookError(f"Hook {hook.name} failed with exit code {return_status}")
         return fired
 
     def _check_allowed(self, hook_file: Path, bypass_allowlist: bool = False) -> bool:

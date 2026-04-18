@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import ANY, Mock
 
 from gh_worktree.commands.checkout import CheckoutCommand
+from gh_worktree.errors import BranchInputError, CommandError, RemoteNotFoundError
 from gh_worktree.git import GitRemote
 from gh_worktree.hooks import Hook
 
@@ -121,11 +122,11 @@ class CheckoutCommandTestCase(TestCase):
     def test_call__raises_on_missing_remote(self):
         self.runtime.get_remote.return_value = None
 
-        with self.assertRaises(AssertionError, msg="Couldn't find matching remote"):
+        with self.assertRaises(RemoteNotFoundError, msg="Couldn't find matching remote"):
             self.command("feature")
 
     def test_call__rejects_invalid_pull_url(self):
-        with self.assertRaises(ValueError, msg="Couldn't parse input. Must be"):
+        with self.assertRaises(BranchInputError, msg="Couldn't parse input. Must be"):
             self.command("https://github.com/octo/repo/issues/12")
 
     def test_call__yes_true_sets_bypass_allowlist_true(self):
@@ -141,3 +142,10 @@ class CheckoutCommandTestCase(TestCase):
         self.hooks.fire.assert_any_call(
             Hook.post_checkout, "feature", ANY, "feature", bypass_allowlist=True
         )
+
+    def test_call__ignores_fetch_error(self):
+        self.git.fetch.side_effect = CommandError("fetch failed")
+
+        self.command("feature")
+
+        self.git.open_worktree.assert_called_once_with("feature")

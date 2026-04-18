@@ -2,6 +2,7 @@ import re
 from collections import namedtuple
 
 from gh_worktree.context import Context
+from gh_worktree.errors import CommandError, WorktreeNameError
 from gh_worktree.utils import iter_output, stream_exec
 
 TYPE_RE = re.compile(r"\((.*)\)")
@@ -16,7 +17,7 @@ class GitCLI:
     def _stream_exec(self, *command: str):
         return_status = stream_exec(["git", *command], cwd=self.context.cwd)
         if return_status != 0:
-            raise RuntimeError(
+            raise CommandError(
                 f"Command failed, with exit status {return_status}: git {' '.join(command)}"
             )
 
@@ -57,7 +58,7 @@ class GitCLI:
     def open_worktree(self, name: str):
         """Create a new worktree from an existing branch"""
         if ".." in name or name.startswith("/"):
-            raise ValueError("Worktree name cannot contain '..' or start with '/'")
+            raise WorktreeNameError("Worktree name cannot contain '..' or start with '/'")
         # `git worktree add <path>` creates a new branch from HEAD. To use an
         # existing branch, the command is `git worktree add <path> <branch>`.
         # We pass `name` for both to check out the existing branch in a path with the same name.

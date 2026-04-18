@@ -2,6 +2,7 @@ import re
 from functools import cached_property
 
 from gh_worktree.command import Command
+from gh_worktree.errors import BranchInputError, CommandError, RemoteNotFoundError, RemoteUsageError
 from gh_worktree.hooks import Hook
 from gh_worktree.runtime import Runtime
 from gh_worktree.utils import normalize_worktree_name
@@ -24,12 +25,14 @@ class CheckoutInput:
             and not URL_RE.match(self.branch_or_pr)
             and not BRANCH_RE.match(self.branch_or_pr)
         ):
-            raise ValueError("Couldn't parse input. Must be branch name, PR number or PR URL.")
+            raise BranchInputError(
+                "Couldn't parse input. Must be branch name, PR number or PR URL."
+            )
 
         if self.remote_name is not None and (
             self.branch_or_pr.isdigit() or URL_RE.match(self.branch_or_pr)
         ):
-            raise ValueError("Remote name isn't allowed with PR number or PR URL.")
+            raise RemoteUsageError("Remote name isn't allowed with PR number or PR URL.")
 
     @cached_property
     def owner(self) -> str:
@@ -46,7 +49,7 @@ class CheckoutInput:
 
         remote = self.runtime.get_remote(name=self.remote_name)
         if not remote:
-            raise AssertionError("Couldn't find matching remote for --remote input")
+            raise RemoteNotFoundError("Couldn't find matching remote for --remote input")
 
         return remote.uri.replace("https://github.com/", "").split("/", 1)[0]
 
@@ -57,7 +60,7 @@ class CheckoutInput:
             return self.remote_name
         remote = self.runtime.get_remote(owner_name=self.owner)
         if not remote:
-            raise AssertionError("Couldn't find matching remote for PR")
+            raise RemoteNotFoundError("Couldn't find matching remote for PR")
         return remote.name
 
     @cached_property
@@ -120,7 +123,7 @@ class CheckoutCommand(Command):
             # TODO: is this good to detect if it's local only?
             try:
                 self._runtime.git.fetch(inpt.remote, f"{inpt.worktree_name}:{inpt.worktree_name}")
-            except RuntimeError:
+            except (CommandError, OSError):
                 print("Ignoring git fetch error, attempting to open worktree")
                 pass
 

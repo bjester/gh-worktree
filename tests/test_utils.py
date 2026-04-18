@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
+from gh_worktree.errors import AncestorNotFoundError
 from gh_worktree.utils import find_up, normalize_worktree_name
 
 
@@ -40,7 +41,7 @@ class FindUpTestCase(TestCase):
         subdir = root / "subdir"
         subdir.mkdir()
 
-        with self.assertRaisesRegex(RuntimeError, "Could not find non_existent_file"):
+        with self.assertRaisesRegex(AncestorNotFoundError, "Could not find non_existent_file"):
             find_up("non_existent_file", subdir)
 
 
