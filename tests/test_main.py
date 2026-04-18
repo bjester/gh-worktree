@@ -1,0 +1,48 @@
+from types import SimpleNamespace
+from unittest import TestCase
+from unittest.mock import patch
+
+import gh_worktree.main as main_module
+from gh_worktree.errors import AliasConflictError
+from gh_worktree.main import WorktreeCommands
+
+
+class WorktreeCommandsTestCase(TestCase):
+    def setUp(self):
+        self.commands = WorktreeCommands()
+
+    def test_add__registers_command_name_but_not_alias(self):
+        self.assertTrue(callable(self.commands.remove))
+        self.assertFalse(hasattr(self.commands, "rm"))
+
+    def test_alias_map__contains_remove_alias_mapping(self):
+        alias_map = self.commands._alias_map
+
+        self.assertIn("rm", alias_map)
+        self.assertEqual(alias_map["rm"], "remove")
+
+    def test_alias_map__raises_when_aliases_conflict(self):
+        self.commands._commands.append(SimpleNamespace(_name="duplicate", _aliases=["rm"]))
+
+        with self.assertRaisesRegex(
+            AliasConflictError,
+            "Command duplicate wants alias rm but it already exists for remove",
+        ):
+            _ = self.commands._alias_map
+
+    @patch("builtins.print")
+    def test_version__prints_cli_name_and_version(self, print_mock):
+        self.commands.version()
+
+        print_mock.assert_called_once_with(f"{self.commands._name} {main_module.__version__}")
+
+    @patch("builtins.print")
+    def test_aliases__prints_only_commands_with_aliases(self, print_mock):
+        self.commands._commands = [
+            SimpleNamespace(_name="create", _aliases=[]),
+            SimpleNamespace(_name="remove", _aliases=["rm"]),
+        ]
+
+        self.commands.aliases()
+
+        print_mock.assert_called_once_with("remove: rm")
