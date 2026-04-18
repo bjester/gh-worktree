@@ -39,7 +39,8 @@ dev = [
     "pytest>=8.0.0",
     "exceptiongroup; python_version < '3.11'",
     "prek",
-    "pyinstaller"
+    "pyinstaller",
+    "ruff>=0.15.11",
 ]
 
 [build-system]
@@ -50,8 +51,14 @@ build-backend = "uv_build"
 pythonpath = "src"
 testpaths = ["tests"]
 
-[tool.flake8]
-max-line-length = 100
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "T10", "C90", "UP", "B", "A", "PTH"]
+ignore = []
+
+[tool.ruff.lint.mccabe]
 max-complexity = 10
 
 [tool.uv.build-backend]
