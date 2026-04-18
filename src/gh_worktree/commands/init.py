@@ -1,13 +1,10 @@
 import re
-from typing import Optional
 from urllib import parse
 
 from gh_worktree.command import Command
 from gh_worktree.config import RepositoryConfig
-from gh_worktree.hooks import Hook
-from gh_worktree.hooks import HookExists
+from gh_worktree.hooks import Hook, HookExists
 from gh_worktree.templates import TemplateExists
-
 
 JUST_PATH_RE = re.compile(r"^[\w\-_]+/[\w\-_]+$")
 GIT_EXT_RE = re.compile(r"\.git$")
@@ -25,8 +22,8 @@ def normalize(repo: str):
     return repo
 
 
-class RepositoryTarget(object):
-    def __init__(self, repo: str, destination_dir: Optional[str] = None):
+class RepositoryTarget:
+    def __init__(self, repo: str, destination_dir: str | None = None):
         self.uri = normalize(repo)
         self._destination_dir = destination_dir
 
@@ -63,7 +60,7 @@ class InitCommand(Command):
 
     _name = "init"
 
-    def __call__(self, repo: str, *destination_dir: Optional[str], yes: bool = False):
+    def __call__(self, repo: str, *destination_dir: str | None, yes: bool = False):
         """
         Initialize a project for using gh-worktree with it, by cloning the project and configuring
         it to be a bare git repo.
@@ -111,9 +108,7 @@ class InitCommand(Command):
                 f.write("gitdir: ./.bare")
 
             self._context.reset_properties()
-            self._runtime.git.config(
-                "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*"
-            )
+            self._runtime.git.config("remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
             self._runtime.git.fetch()
             repo_data = self._runtime.gh.repo_status()
             config = RepositoryConfig()
@@ -126,9 +121,7 @@ class InitCommand(Command):
             )
 
             self._context.config_dir.mkdir(parents=True, exist_ok=True)
-            with (self._context.config_dir / "config.json").open(
-                "w", encoding="utf-8"
-            ) as f:
+            with (self._context.config_dir / "config.json").open("w", encoding="utf-8") as f:
                 config.save(f)
 
             self._add_templates(config)
@@ -151,9 +144,7 @@ class InitCommand(Command):
             # copy it
             try:
                 with self._runtime.hooks.add(hook) as f:
-                    for line in self._runtime.git.cat_file(
-                        config.default_branch, hook.git_path
-                    ):
+                    for line in self._runtime.git.cat_file(config.default_branch, hook.git_path):
                         f.write(f"{line}\n")
             except HookExists as e:
                 print(f"{str(e)} Skipping")
@@ -168,9 +159,7 @@ class InitCommand(Command):
             # copy it
             try:
                 with self._runtime.templates.add(template_file) as f:
-                    for line in self._runtime.git.cat_file(
-                        config.default_branch, template_file
-                    ):
+                    for line in self._runtime.git.cat_file(config.default_branch, template_file):
                         f.write(f"{line}\n")
             except TemplateExists as e:
                 print(f"{str(e)} Skipping")

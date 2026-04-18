@@ -39,13 +39,7 @@ class InstallCommandTestCase(TestCase):
         self.command(gh_ext=True)
 
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
 
@@ -70,13 +64,7 @@ class InstallCommandTestCase(TestCase):
         self.command(alias="wktr", gh_ext=True)
 
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-wktr"
-            / "gh-wktr"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-wktr" / "gh-wktr"
         )
         mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
 
@@ -101,13 +89,7 @@ class InstallCommandTestCase(TestCase):
         self.command(alias="worktree", gh_ext=True)
 
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
 
@@ -172,7 +154,7 @@ class InstallCommandTestCase(TestCase):
         )
 
     @patch("sys.argv", ["/home/user/gh-worktree/src/gh_worktree/main.py"])
-    @patch("os.symlink")
+    @patch("pathlib.Path.symlink_to", autospec=True)
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.exists", return_value=False)
     @patch("pathlib.Path.is_symlink", return_value=False)
@@ -184,18 +166,12 @@ class InstallCommandTestCase(TestCase):
 
         expected_source = Path("/home/user/gh-worktree/src/gh_worktree/main.py")
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
-        mock_symlink.assert_called_once_with(expected_source, expected_target)
+        mock_symlink.assert_called_once_with(expected_target, expected_source)
 
     @patch("sys.argv", ["/home/user/gh-worktree/.venv/bin/gh-worktree"])
-    @patch("os.symlink")
+    @patch("pathlib.Path.symlink_to", autospec=True)
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.exists", return_value=False)
     @patch("pathlib.Path.is_symlink", return_value=False)
@@ -207,15 +183,9 @@ class InstallCommandTestCase(TestCase):
 
         expected_source = Path("/home/user/gh-worktree/.venv/bin/gh-worktree")
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
-        mock_symlink.assert_called_once_with(expected_source, expected_target)
+        mock_symlink.assert_called_once_with(expected_target, expected_source)
 
     @patch("sys.argv", ["/usr/bin/gh-worktree"])
     @patch("shutil.copy")
@@ -239,13 +209,7 @@ class InstallCommandTestCase(TestCase):
 
         expected_source = Path("/usr/bin/gh-worktree")
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_copy.assert_called_once_with(expected_source, expected_target)
         mock_chmod.assert_called_once()
@@ -272,13 +236,7 @@ class InstallCommandTestCase(TestCase):
 
         expected_source = Path("/usr/bin/gh-worktree.pex")
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_copy.assert_called_once_with(expected_source, expected_target)
 
@@ -305,13 +263,7 @@ class InstallCommandTestCase(TestCase):
         self.command()
 
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
 
@@ -361,13 +313,7 @@ class InstallCommandTestCase(TestCase):
 
         self.assertEqual(cm.exception.code, 1)
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_print.assert_called_with(
             f"Path already exists, use --force to overwrite: {expected_target}"
@@ -385,13 +331,7 @@ class InstallCommandTestCase(TestCase):
 
         self.assertEqual(cm.exception.code, 1)
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_print.assert_called_with(
             f"Path already exists, use --force to overwrite: {expected_target}"
@@ -420,13 +360,7 @@ class InstallCommandTestCase(TestCase):
         self.command(gh_ext=True, force=True)
 
         expected_target = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "gh"
-            / "extensions"
-            / "gh-worktree"
-            / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
         mock_unlink.assert_called_once_with(True)
         mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)

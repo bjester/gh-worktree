@@ -119,9 +119,7 @@ class CreateCommandTestCase(TestCase):
         self.assertTrue(self.context.assert_called)
         self.runtime.get_remote.assert_not_called()
         self.git.fetch.assert_called_once_with("upstream")
-        self.git.add_worktree.assert_called_once_with(
-            "feature", "upstream/some/nested/branch"
-        )
+        self.git.add_worktree.assert_called_once_with("feature", "upstream/some/nested/branch")
         self.templates.copy.assert_called_once_with("feature")
         self.hooks.fire.assert_any_call(
             Hook.pre_create,

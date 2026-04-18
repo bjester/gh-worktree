@@ -2,8 +2,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase
-from unittest.mock import ANY
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 from gh_worktree.commands.checkout import CheckoutCommand
 from gh_worktree.git import GitRemote

@@ -1,10 +1,8 @@
 from pathlib import Path
 from types import SimpleNamespace
-from unittest import mock
-from unittest import TestCase
+from unittest import TestCase, mock
 
-from gh_worktree.git import GitCLI
-from gh_worktree.git import GitRemote
+from gh_worktree.git import GitCLI, GitRemote
 
 
 class GitCLITestCase(TestCase):
@@ -23,24 +21,18 @@ class GitCLITestCase(TestCase):
 
     def test_stream_exec(self):
         self.cli._stream_exec("foo", "bar")
-        self.mock_stream_exec.assert_called_once_with(
-            ["git", "foo", "bar"], cwd=Path("/test/tmp")
-        )
+        self.mock_stream_exec.assert_called_once_with(["git", "foo", "bar"], cwd=Path("/test/tmp"))
 
     def test_stream_exec__fail(self):
         self.mock_stream_exec.return_value = 1
         with self.assertRaises(RuntimeError):
             self.cli._stream_exec("foo", "bar")
-        self.mock_stream_exec.assert_called_once_with(
-            ["git", "foo", "bar"], cwd=Path("/test/tmp")
-        )
+        self.mock_stream_exec.assert_called_once_with(["git", "foo", "bar"], cwd=Path("/test/tmp"))
 
     def test_iter_output(self):
         self.mock_iter_output.return_value = ["line1", "line2"]
         lines = list(self.cli._iter_output("foo", "bar"))
-        self.mock_iter_output.assert_called_once_with(
-            ["git", "foo", "bar"], cwd=Path("/test/tmp")
-        )
+        self.mock_iter_output.assert_called_once_with(["git", "foo", "bar"], cwd=Path("/test/tmp"))
         self.assertEqual(lines, ["line1", "line2"])
 
     def test_clone(self):
@@ -74,9 +66,7 @@ class GitCLITestCase(TestCase):
 
     def test_fetch(self):
         self.cli.fetch()
-        self.mock_stream_exec.assert_called_with(
-            ["git", "fetch", "origin"], cwd=Path("/test/tmp")
-        )
+        self.mock_stream_exec.assert_called_with(["git", "fetch", "origin"], cwd=Path("/test/tmp"))
 
         self.cli.fetch(remote="upstream", refspec="master")
         self.mock_stream_exec.assert_called_with(

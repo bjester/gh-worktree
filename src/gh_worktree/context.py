@@ -1,19 +1,15 @@
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional
-from typing import Union
 
-from gh_worktree.config import Config
-from gh_worktree.config import GlobalConfig
-from gh_worktree.config import RepositoryConfig
+from gh_worktree.config import Config, GlobalConfig, RepositoryConfig
 from gh_worktree.utils import find_up
 
 
-class Context(object):
+class Context:
     def __init__(self):
         self.cwd = Path.cwd()
-        self._cached_project_dir: Optional[Path] = None
+        self._cached_project_dir: Path | None = None
 
     @property
     def project_dir(self) -> Path:
@@ -41,7 +37,7 @@ class Context(object):
             return Path.home() / ".gh" / "worktree"
 
     @contextmanager
-    def use(self, cwd: Union[str, Path]):
+    def use(self, cwd: str | Path):
         old_cwd = self.cwd
         cwd_path = Path(cwd)
         os.chdir(cwd_path)
@@ -59,8 +55,8 @@ class Context(object):
     def assert_within_project(self):
         try:
             find_up(".bare", self.cwd)
-        except RuntimeError:
-            raise AssertionError("Project not found")
+        except RuntimeError as e:
+            raise AssertionError("Project not found") from e
 
     def get_config(self) -> RepositoryConfig:
         file_path = self.config_dir / "config.json"

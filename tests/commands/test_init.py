@@ -3,12 +3,9 @@ import tempfile
 from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest import TestCase
-from unittest.mock import MagicMock
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
-from gh_worktree.commands.init import InitCommand
-from gh_worktree.commands.init import normalize
-from gh_worktree.commands.init import RepositoryTarget
+from gh_worktree.commands.init import InitCommand, RepositoryTarget, normalize
 from gh_worktree.hooks import Hook
 
 
@@ -59,9 +56,7 @@ class RepositoryTargetTestCase(TestCase):
 
     def test_validate__invalid_path(self):
         target = RepositoryTarget("https://github.com/octo/repo/pull/123.git")
-        with self.assertRaises(
-            ValueError, msg="Invalid repository path: octo/repo/pull/123"
-        ):
+        with self.assertRaises(ValueError, msg="Invalid repository path: octo/repo/pull/123"):
             target.validate()
 
     def test_path__url(self):
@@ -136,9 +131,7 @@ class InitCommandTestCase(TestCase):
         command = InitCommand(self.runtime)
         command("octo/repo", str(self.project_dir))
 
-        self.git.clone.assert_called_once_with(
-            "https://github.com/octo/repo.git", ".bare"
-        )
+        self.git.clone.assert_called_once_with("https://github.com/octo/repo.git", ".bare")
         self.git.config.assert_called_once_with(
             "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*"
         )
@@ -191,9 +184,7 @@ class InitCommandTestCase(TestCase):
         command = InitCommand(self.runtime)
         command("octo/repo", str(self.project_dir))
 
-        self.runtime.templates.add.assert_called_once_with(
-            ".gh/worktree/templates/example.txt"
-        )
+        self.runtime.templates.add.assert_called_once_with(".gh/worktree/templates/example.txt")
         mock_f.write.assert_called_once_with("hello\n")
 
     def test_add_templates__skips_existing(self):
@@ -210,9 +201,7 @@ class InitCommandTestCase(TestCase):
         command = InitCommand(self.runtime)
         command._add_templates(config)
 
-        self.runtime.templates.add.assert_called_once_with(
-            ".gh/worktree/templates/example.txt"
-        )
+        self.runtime.templates.add.assert_called_once_with(".gh/worktree/templates/example.txt")
         self.git.cat_file.assert_not_called()
 
     def test_call__yes_true_sets_bypass_allowlist_true(self):

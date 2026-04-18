@@ -1,5 +1,3 @@
-from typing import Optional
-
 from gh_worktree.command import Command
 from gh_worktree.hooks import Hook
 from gh_worktree.utils import normalize_worktree_name
@@ -8,7 +6,7 @@ from gh_worktree.utils import normalize_worktree_name
 class CreateCommand(Command):
     _name = "create"
 
-    def __call__(self, worktree_name: str, *base_ref: Optional[str], yes: bool = False):
+    def __call__(self, worktree_name: str, *base_ref: str | None, yes: bool = False):
         """
         Create a new worktree in the current project.
 
@@ -55,9 +53,7 @@ class CreateCommand(Command):
                 normalized_name,
                 bypass_allowlist=yes,
             )
-            self._runtime.git.add_worktree(
-                worktree_name, f"{git_remote_name}/{base_ref}"
-            )
+            self._runtime.git.add_worktree(worktree_name, f"{git_remote_name}/{base_ref}")
             self._runtime.templates.copy(worktree_name)
             self._runtime.hooks.fire(
                 Hook.post_create,

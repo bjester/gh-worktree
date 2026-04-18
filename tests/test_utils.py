@@ -2,8 +2,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from gh_worktree.utils import find_up
-from gh_worktree.utils import normalize_worktree_name
+from gh_worktree.utils import find_up, normalize_worktree_name
 
 
 class FindUpTestCase(TestCase):
@@ -50,24 +49,16 @@ class NormalizeWorktreeNameTestCase(TestCase):
         self.assertEqual(normalize_worktree_name("feature"), "feature")
 
     def test_slash_replaced_with_dash(self):
-        self.assertEqual(
-            normalize_worktree_name("feat/some-feature"), "feat-some-feature"
-        )
+        self.assertEqual(normalize_worktree_name("feat/some-feature"), "feat-some-feature")
 
     def test_multiple_slashes_collapsed(self):
-        self.assertEqual(
-            normalize_worktree_name("feat/nested/branch"), "feat-nested-branch"
-        )
+        self.assertEqual(normalize_worktree_name("feat/nested/branch"), "feat-nested-branch")
 
     def test_dashes_preserved(self):
-        self.assertEqual(
-            normalize_worktree_name("my-feature-branch"), "my-feature-branch"
-        )
+        self.assertEqual(normalize_worktree_name("my-feature-branch"), "my-feature-branch")
 
     def test_underscores_replaced(self):
-        self.assertEqual(
-            normalize_worktree_name("my_feature_branch"), "my-feature-branch"
-        )
+        self.assertEqual(normalize_worktree_name("my_feature_branch"), "my-feature-branch")
 
     def test_mixed_slashes_and_dashes(self):
         self.assertEqual(normalize_worktree_name("feat/my-feature"), "feat-my-feature")

@@ -1,9 +1,7 @@
 import json
-from typing import Dict
-from typing import List
 
 
-class Config(object):
+class Config:
     type: str
 
     def __init__(self):
@@ -29,11 +27,11 @@ class GlobalConfig(Config):
     type: str = "global"
 
     @property
-    def allowed_hooks(self) -> Dict[str, str]:
+    def allowed_hooks(self) -> dict[str, str]:
         return self._data.get("allowed_hooks", {})
 
     @property
-    def allowed_envvars(self) -> List[str]:
+    def allowed_envvars(self) -> list[str]:
         return self._data.get("allowed_envvars", [])
 
     def allow_hook(self, path: str, checksum: str):

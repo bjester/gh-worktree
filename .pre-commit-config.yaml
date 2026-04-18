@@ -3,30 +3,23 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-      - id: debug-statements
       - id: end-of-file-fixer
         exclude: '^.+?\.json.+?\.ya?ml$'
-  - repo: https://github.com/PyCQA/flake8
-    rev: '7.1.2'
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.10
     hooks:
-      - id: flake8
-        additional_dependencies: [
-          'flake8-pyproject'
-        ]
-  - repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.16.0
-    hooks:
-      - id: reorder-python-imports
-        language_version: python3
-  - repo: https://github.com/psf/black
-    rev: '24.10.0'
-    hooks:
-      - id: black
-        additional_dependencies: [
-          'click>=8.0.4'
-        ]
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
   - repo: https://github.com/astral-sh/uv-pre-commit
-    # uv version.
-    rev: 0.10.2
+    rev: 0.11.6
     hooks:
       - id: uv-lock
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.21.0
+    hooks:
+      - id: yamlfmt
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint

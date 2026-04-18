@@ -32,9 +32,11 @@ jobs:
         run: |
           set -eo pipefail
           cd dist/
-          echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
-          echo "PEX_NAME=$(ls gh-worktree.pex)" >> $GITHUB_ENV
-          echo "EXE_NAME=$(ls gh-worktree)" >> $GITHUB_ENV
+          {
+            echo "WHL_NAME=$(ls -- *whl)"
+            echo "PEX_NAME=$(ls gh-worktree.pex)"
+            echo "EXE_NAME=$(ls gh-worktree)"
+          } >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v7
         id: artifact-whl-upload-step
@@ -74,10 +76,12 @@ jobs:
         id: asset-list
         run: |
           set -eo pipefail
-          echo "WHL_NAME=$(ls *whl)" >> $GITHUB_ENV
-          echo "WHL_CHECKSUM=$(find ./ -name '*whl' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "PEX_CHECKSUM=$(find ./ -name 'gh-worktree.pex' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "EXE_CHECKSUM=$(find ./ -name 'gh-worktree' -type f | head -1 | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
+          {
+            echo "WHL_NAME=$(ls -- *whl)"
+            echo "WHL_CHECKSUM=$(find ./ -name '*whl' -type f | head -1 | sha256sum | cut -d ' ' -f 1)"
+            echo "PEX_CHECKSUM=$(find ./ -name 'gh-worktree.pex' -type f | head -1 | sha256sum | cut -d ' ' -f 1)"
+            echo "EXE_CHECKSUM=$(find ./ -name 'gh-worktree' -type f | head -1 | sha256sum | cut -d ' ' -f 1)"
+          } >> "$GITHUB_ENV"
 
       - name: Create PR comment with asset link
         uses: thollander/actions-comment-pull-request@v3

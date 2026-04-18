@@ -1,23 +1,19 @@
 import re
 from functools import cached_property
-from typing import Optional
 
 from gh_worktree.command import Command
 from gh_worktree.hooks import Hook
 from gh_worktree.runtime import Runtime
 from gh_worktree.utils import normalize_worktree_name
 
-
 URL_RE = re.compile(r"^https://github\.com/[a-z0-9-]+/[\w.-]+/pull/\d+$", re.IGNORECASE)
 BRANCH_RE = re.compile(r"^[\w.-/]+$", re.IGNORECASE)
 
 
-class CheckoutInput(object):
+class CheckoutInput:
     """Checkout command input abstraction"""
 
-    def __init__(
-        self, runtime: Runtime, branch_or_pr: str, remote_name: Optional[str] = None
-    ):
+    def __init__(self, runtime: Runtime, branch_or_pr: str, remote_name: str | None = None):
         self.runtime = runtime
         self.branch_or_pr = branch_or_pr
         self.remote_name = remote_name
@@ -28,9 +24,7 @@ class CheckoutInput(object):
             and not URL_RE.match(self.branch_or_pr)
             and not BRANCH_RE.match(self.branch_or_pr)
         ):
-            raise ValueError(
-                "Couldn't parse input. Must be branch name, PR number or PR URL."
-            )
+            raise ValueError("Couldn't parse input. Must be branch name, PR number or PR URL.")
 
         if self.remote_name is not None and (
             self.branch_or_pr.isdigit() or URL_RE.match(self.branch_or_pr)
@@ -67,7 +61,7 @@ class CheckoutInput(object):
         return remote.name
 
     @cached_property
-    def pr_number(self) -> Optional[str]:
+    def pr_number(self) -> str | None:
         """The PR number, if applicable"""
         if self.branch_or_pr.isdigit():
             return self.branch_or_pr
@@ -94,9 +88,7 @@ class CheckoutInput(object):
 class CheckoutCommand(Command):
     _name = "checkout"
 
-    def __call__(
-        self, branch_or_pr: str, remote: Optional[str] = None, yes: bool = False
-    ):  # noqa: C901
+    def __call__(self, branch_or_pr: str, remote: str | None = None, yes: bool = False):  # noqa: C901
         """
         Checkout an existing branch or PR as a worktree.
 
@@ -123,15 +115,11 @@ class CheckoutCommand(Command):
         inpt.validate()
 
         if inpt.pr_number:
-            self._runtime.git.fetch(
-                inpt.remote, f"pull/{inpt.pr_number}/head:{inpt.worktree_name}"
-            )
+            self._runtime.git.fetch(inpt.remote, f"pull/{inpt.pr_number}/head:{inpt.worktree_name}")
         else:
             # TODO: is this good to detect if it's local only?
             try:
-                self._runtime.git.fetch(
-                    inpt.remote, f"{inpt.worktree_name}:{inpt.worktree_name}"
-                )
+                self._runtime.git.fetch(inpt.remote, f"{inpt.worktree_name}:{inpt.worktree_name}")
             except RuntimeError:
                 print("Ignoring git fetch error, attempting to open worktree")
                 pass

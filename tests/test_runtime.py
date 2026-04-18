@@ -20,9 +20,7 @@ class RuntimeTestCase(TestCase):
         self.runtime.git = SimpleNamespace(remote=lambda: self.remotes)
 
     def test_get_remote__no_args_raises(self):
-        with self.assertRaises(
-            ValueError, msg="Must provide either owner_name or name"
-        ):
+        with self.assertRaises(ValueError, msg="Must provide either owner_name or name"):
             self.runtime.get_remote()
 
     def test_get_remote__owner_name(self):

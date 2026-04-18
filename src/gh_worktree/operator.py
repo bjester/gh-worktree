@@ -1,10 +1,10 @@
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 from gh_worktree.context import Context
 
 
-class ConfigOperator(object):
+class ConfigOperator:
     """
     Base class for utility classes that rely on the configuration directories.
     """

@@ -9,6 +9,8 @@ updates:
       interval: "weekly"
       day: "friday"
       time: "00:00"
+    cooldown:
+      default-days: 7
   # Maintain dependencies for Github Actions
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -16,6 +18,8 @@ updates:
       interval: "monthly"
       day: "friday"
       time: "00:00"
+    cooldown:
+      default-days: 7
     groups:
       github:
         patterns:
