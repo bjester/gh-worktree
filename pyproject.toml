@@ -42,7 +42,7 @@ dev = [
     "exceptiongroup; python_version < '3.11'",
     "prek",
     "pyinstaller",
-    "ruff>=0.15.11",
+    "ruff>=0.15.10",
     "pex>=2.88.1"
 ]
 
@@ -81,3 +81,7 @@ wheel-exclude = [
     "Makefile",
     "tests/"
 ]
+
+# helps to guard against supply chain attacks
+[tool.uv]
+exclude-newer = "7 days"
