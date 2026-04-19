@@ -6,11 +6,52 @@ on:
   pull_request:
 
 jobs:
-  build:
+  build_python:
     runs-on: ubuntu-latest
     outputs:
+      whl-name: ${{ steps.asset-list.outputs.whl_name }}
       whl-artifact-id: ${{ steps.artifact-whl-upload-step.outputs.artifact-id }}
       pex-artifact-id: ${{ steps.artifact-pex-upload-step.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          ignore-nothing-to-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Build wheel and pex
+        run: |
+          make clean
+          make build-whl dist/gh-worktree.pex
+
+      - name: Read the python asset list
+        id: asset-list
+        run: |
+          set -eo pipefail
+          echo "whl_name=$(find dist/ -name '*.whl' -exec basename {} \+)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        id: artifact-whl-upload-step
+        if: github.event_name == 'pull_request'
+        with:
+          name: ${{ steps.asset-list.outputs.whl_name }}
+          path: dist/*.whl
+
+      - uses: actions/upload-artifact@v7
+        id: artifact-pex-upload-step
+        if: github.event_name == 'pull_request'
+        with:
+          name: gh-worktree.pex
+          path: dist/gh-worktree.pex
+
+  build_binary_amd64:
+    runs-on: ubuntu-latest
+    outputs:
       exe-artifact-id: ${{ steps.artifact-exe-upload-step.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v6
@@ -24,45 +65,55 @@ jobs:
       - name: Set up Python
         run: uv python install
 
-      - name: Build
-        run: make build
-
-      - name: Read the asset list
-        id: build-asset-list
+      - name: Build binary
         run: |
-          set -eo pipefail
-          cd dist/
-          {
-            echo "WHL_NAME=$(ls -- *whl)"
-            echo "PEX_NAME=$(ls gh-worktree.pex)"
-            echo "EXE_NAME=$(ls gh-worktree)"
-          } >> "$GITHUB_ENV"
-
-      - uses: actions/upload-artifact@v7
-        id: artifact-whl-upload-step
-        if: github.event_name == 'pull_request'
-        with:
-          name: ${{ env.WHL_NAME }}
-          path: dist/*.whl
-
-      - uses: actions/upload-artifact@v7
-        id: artifact-pex-upload-step
-        if: github.event_name == 'pull_request'
-        with:
-          name: ${{ env.PEX_NAME }}
-          path: dist/gh-worktree.pex
+          make clean
+          make dist/gh-worktree
+          mv dist/gh-worktree dist/gh-worktree-linux-amd64
 
       - uses: actions/upload-artifact@v7
         id: artifact-exe-upload-step
         if: github.event_name == 'pull_request'
         with:
-          name: ${{ env.EXE_NAME }}
-          path: dist/gh-worktree
+          name: gh-worktree-linux-amd64
+          path: dist/gh-worktree-linux-amd64
+
+  build_binary_arm64:
+    runs-on: ubuntu-24.04-arm
+    outputs:
+      exe-artifact-id: ${{ steps.artifact-exe-upload-step.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          ignore-nothing-to-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Build binary
+        run: |
+          make clean
+          make dist/gh-worktree
+          mv dist/gh-worktree dist/gh-worktree-linux-arm64
+
+      - uses: actions/upload-artifact@v7
+        id: artifact-exe-upload-step
+        if: github.event_name == 'pull_request'
+        with:
+          name: gh-worktree-linux-arm64
+          path: dist/gh-worktree-linux-arm64
 
   comment-pr:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    needs: build
+    needs:
+      - build_python
+      - build_binary_amd64
+      - build_binary_arm64
     permissions:
       pull-requests: write
       contents: read
@@ -70,17 +121,23 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v8
         with:
-          artifact-ids: ${{ needs.build.outputs.pex-artifact-id }},${{ needs.build.outputs.whl-artifact-id }},${{ needs.build.outputs.exe-artifact-id }}
+          artifact-ids: ${{ needs.build_python.outputs.pex-artifact-id }},${{ needs.build_python.outputs.whl-artifact-id }},${{ needs.build_binary_amd64.outputs.exe-artifact-id }},${{ needs.build_binary_arm64.outputs.exe-artifact-id }}
 
       - name: Read the asset list
         id: asset-list
         run: |
           set -eo pipefail
+          WHL_NAME="$(find ./ -name '*whl' -type f | head -1 | xargs basename)"
+          WHL_CHECKSUM="$(find ./ -name '*whl' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
+          PEX_CHECKSUM="$(find ./ -name 'gh-worktree.pex' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
+          EXE_AMD64_CHECKSUM="$(find ./ -name 'gh-worktree-linux-amd64' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
+          EXE_ARM64_CHECKSUM="$(find ./ -name 'gh-worktree-linux-arm64' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
           {
-            echo "WHL_NAME=$(ls -- *whl)"
-            echo "WHL_CHECKSUM=$(find ./ -name '*whl' -type f | head -1 | sha256sum | cut -d ' ' -f 1)"
-            echo "PEX_CHECKSUM=$(find ./ -name 'gh-worktree.pex' -type f | head -1 | sha256sum | cut -d ' ' -f 1)"
-            echo "EXE_CHECKSUM=$(find ./ -name 'gh-worktree' -type f | head -1 | sha256sum | cut -d ' ' -f 1)"
+            echo "WHL_NAME=${WHL_NAME}"
+            echo "WHL_CHECKSUM=${WHL_CHECKSUM}"
+            echo "PEX_CHECKSUM=${PEX_CHECKSUM}"
+            echo "EXE_AMD64_CHECKSUM=${EXE_AMD64_CHECKSUM}"
+            echo "EXE_ARM64_CHECKSUM=${EXE_ARM64_CHECKSUM}"
           } >> "$GITHUB_ENV"
 
       - name: Create PR comment with asset link
@@ -91,7 +148,8 @@ jobs:
 
             | Type | File | Checksum |
             | --- | --- | --- |
-            | Wheel | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
-            | PEX | [gh-worktree.pex](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
-            | Binary | [gh-worktree](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build.outputs.exe-artifact-id }}) | `${{ env.EXE_CHECKSUM }}` |
+            | Wheel | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_python.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
+            | PEX | [gh-worktree.pex](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_python.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
+            | Binary (amd64) | [gh-worktree-linux-amd64](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_binary_amd64.outputs.exe-artifact-id }}) | `${{ env.EXE_AMD64_CHECKSUM }}` |
+            | Binary (arm64) | [gh-worktree-linux-arm64](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_binary_arm64.outputs.exe-artifact-id }}) | `${{ env.EXE_ARM64_CHECKSUM }}` |
           comment-tag: build-assets
