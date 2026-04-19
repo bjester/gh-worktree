@@ -3,12 +3,13 @@ import os
 import stat
 from contextlib import contextmanager
 from enum import Enum
+from logging import Logger
 from pathlib import Path
 
 from gh_worktree.context import Context
 from gh_worktree.errors import HookError, HookExistsError
 from gh_worktree.operator import ConfigOperator
-from gh_worktree.utils import COLOR_RESET, COLOR_YELLOW, stream_exec
+from gh_worktree.subprocess import SubprocessOperator
 
 
 class Hook(Enum):
@@ -30,7 +31,7 @@ class HookExists(HookExistsError):
     pass
 
 
-class Hooks(ConfigOperator):
+class Hooks(ConfigOperator, SubprocessOperator):
     """
     Encapsulates operations for managing and executing hooks in the configuration
     system, such as firing hooks, checking their permissions, and adding new hooks.
@@ -40,8 +41,8 @@ class Hooks(ConfigOperator):
     are only executed if they're checksum has been registered as allowed.
     """
 
-    def __init__(self, context: Context):
-        super().__init__(context)
+    def __init__(self, context: Context, logger: Logger):
+        super().__init__(context, logger)
         self.dir_name = "hooks"
 
     def fire(
@@ -69,16 +70,15 @@ class Hooks(ConfigOperator):
             # Ensure the hook file is executable
             hook_file_str = str(hook_file)
             if not os.access(hook_file_str, os.X_OK):
-                print(f"Hook {hook_file_str} is not executable. Skipping.")
+                self.logger.warning(f"Hook {hook_file_str} is not executable. Skipping.")
                 continue
 
             if not self._check_allowed(hook_file, bypass_allowlist=bypass_allowlist):
-                print(f"Hook {hook_file_str} is not allowed to run. Skipping.")
+                self.logger.warning(f"Hook {hook_file_str} is not allowed to run. Skipping.")
                 continue
 
             fired = True
-            command_args = [hook_file_str, *[str(arg) for arg in args]]
-            return_status = stream_exec(command_args, cwd=self.context.cwd)
+            return_status = self.stream_exec([hook_file_str, *[str(arg) for arg in args]])
             if return_status != 0:
                 raise HookError(f"Hook {hook.name} failed with exit code {return_status}")
         return fired
@@ -101,11 +101,9 @@ class Hooks(ConfigOperator):
         if hook_file_str in allowed_hooks and allowed_hooks[hook_file_str] == checksum:
             return True
 
-        print(f"New/modified hook found: {hook_file_str}")
+        self.logger.warning(f"New/modified hook found: {hook_file_str}")
         if bypass_allowlist:
-            print(
-                f"{COLOR_YELLOW}WARNING! Bypassing allowlist check for {hook_file_str}{COLOR_RESET}"
-            )
+            self.logger.warning(f"WARNING! Bypassing allowlist check for {hook_file_str}")
             return True
 
         response = input("Do you want to allow this hook to run? (y/N): ")

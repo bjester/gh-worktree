@@ -63,5 +63,5 @@ def main():
     except Exception as e:
         if is_verbose:
             raise
-        print(f"\033[91m\nCommand failed: {str(e)}\033[0m")
+        component._logger.error(f"Command failed: {str(e)}")
         sys.exit(1)

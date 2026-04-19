@@ -148,7 +148,7 @@ class InitCommand(Command):
                     for line in self._runtime.git.cat_file(config.default_branch, hook.git_path):
                         f.write(f"{line}\n")
             except HookExists as e:
-                print(f"{str(e)} Skipping")
+                self._logger.warning(f"Skipping due to error: {str(e)}")
 
     def _add_templates(self, config):
         """Checks whether the repo has templates in the default branch and copies them"""
@@ -163,4 +163,4 @@ class InitCommand(Command):
                     for line in self._runtime.git.cat_file(config.default_branch, template_file):
                         f.write(f"{line}\n")
             except TemplateExists as e:
-                print(f"{str(e)} Skipping")
+                self._logger.warning(f"Skipping due to error: {str(e)}")

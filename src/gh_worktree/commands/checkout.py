@@ -91,7 +91,7 @@ class CheckoutInput:
 class CheckoutCommand(Command):
     _name = "checkout"
 
-    def __call__(self, branch_or_pr: str, remote: str | None = None, yes: bool = False):  # noqa: C901
+    def __call__(self, branch_or_pr: str, remote: str | None = None, yes: bool = False):
         """
         Checkout an existing branch or PR as a worktree.
 
@@ -124,7 +124,7 @@ class CheckoutCommand(Command):
             try:
                 self._runtime.git.fetch(inpt.remote, f"{inpt.worktree_name}:{inpt.worktree_name}")
             except (CommandError, OSError):
-                print("Ignoring git fetch error, attempting to open worktree")
+                self._logger.warning("Ignoring git fetch error, attempting to open worktree")
                 pass
 
         normalized_name = normalize_worktree_name(inpt.worktree_name)

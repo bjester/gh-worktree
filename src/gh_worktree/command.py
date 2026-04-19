@@ -17,4 +17,10 @@ class Command(BaseCommand):
 
     @property
     def _context(self) -> Context:
+        """Convenience access to the context"""
         return self._runtime.context
+
+    @property
+    def _logger(self):
+        """Convenience access to the logger"""
+        return self._runtime.logger

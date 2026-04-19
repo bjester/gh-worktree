@@ -16,7 +16,7 @@ COLORS = {
 }
 
 # Custom log level for command output
-COMMAND_OUTPUT = logging.DEBUG - 1
+COMMAND_OUTPUT = logging.INFO - 1
 logging.addLevelName(COMMAND_OUTPUT, "COMMAND_OUTPUT")
 
 

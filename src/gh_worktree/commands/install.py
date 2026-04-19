@@ -67,7 +67,7 @@ class InstallCommand(Command):
             install_dir = next((d for d in preferred_install_dirs if str(d) in path_dirs), None)
 
             if not install_dir:
-                print("Could not find a suitable user binary directory in your PATH.")
+                self._logger.error("Could not find a suitable user binary directory in your PATH.")
                 sys.exit(1)
 
             target_paths.append(install_dir / target_name)
@@ -84,7 +84,9 @@ class InstallCommand(Command):
         for target_path in target_paths:
             if target_path.exists() or target_path.is_symlink():
                 if not force:
-                    print(f"Path already exists, use --force to overwrite: {target_path}")
+                    self._logger.warning(
+                        f"Path already exists, use --force to overwrite: {target_path}"
+                    )
                     sys.exit(1)
                 target_path.unlink(True)
 
@@ -95,19 +97,21 @@ class InstallCommand(Command):
             else:
                 shutil.copy(current_script_path, target_path)
                 target_path.chmod(target_path.stat().st_mode | stat.S_IEXEC)
-            print(f"Installed to {target_path}")
+            self._logger.info(f"Installed to {target_path}")
 
     def _ask(self, target_name: str, gh_ext: bool, path_bin: bool) -> tuple[bool, bool]:
         # ask user what path they would like to use for installation, without these args
         if not gh_ext and not path_bin:
-            print("Tip: Re-run this with --alias to change the name\n")
-            print("Which method do you want to use?")
-            print(f"\t1. As a GitHub CLI (gh) extension: gh {target_name.replace('gh-', '')}")
-            print(f"\t2. In your PATH: {target_name}\n")
+            self._logger.info("Tip: Re-run this with --alias to change the name\n")
+            self._logger.info("Which method do you want to use?")
+            self._logger.info(
+                f"\t1. As a GitHub CLI (gh) extension: gh {target_name.replace('gh-', '')}"
+            )
+            self._logger.info(f"\t2. In your PATH: {target_name}\n")
 
             choice = input("Your choice (1, 2): ")
             if choice not in ("1", "2"):
-                print("Invalid choice")
+                self._logger.error("Invalid choice")
                 sys.exit(1)
 
             if choice == "1":

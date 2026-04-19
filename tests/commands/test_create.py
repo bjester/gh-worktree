@@ -34,6 +34,7 @@ class CreateCommandTestCase(TestCase):
         self.git = SimpleNamespace(fetch=Mock(), add_worktree=Mock())
         self.templates = SimpleNamespace(copy=Mock())
         self.runtime = SimpleNamespace(
+            logger=Mock(),
             context=self.context,
             hooks=self.hooks,
             git=self.git,

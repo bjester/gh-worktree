@@ -4,44 +4,47 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, mock
 
-from gh_worktree.gh import GithubCLI
+from gh_worktree.gh import PR_FIELDS, REPO_FIELDS, GithubCLI
+from gh_worktree.logger import setup_logger
 
 
 class GithubCLITestCase(TestCase):
     def setUp(self):
         self.context = SimpleNamespace(cwd=Path("/repo"))
+        self.logger = setup_logger("test")
+        self.gh = GithubCLI(self.context, self.logger)
 
-    def test_pr_status__calls_gh_and_parses_json(self):
+    @mock.patch("gh_worktree.gh.SubprocessOperator.run")
+    def test_pr_status__calls_gh_and_parses_json(self, mock_run):
         payload = {"number": 123, "title": "Example"}
+        mock_run.return_value = mock.Mock(
+            spec=subprocess.CompletedProcess, stdout=json.dumps(payload)
+        )
 
-        def fake_run(command, capture_output, text, check, cwd):
-            self.assertEqual(command[:4], ["gh", "pr", "view", "--json"])
-            self.assertEqual(command[-1], "123")
-            self.assertTrue(capture_output)
-            self.assertTrue(text)
-            self.assertTrue(check)
-            self.assertEqual(cwd, Path("/repo"))
-            return SimpleNamespace(stdout=json.dumps(payload))
-
-        with mock.patch.object(subprocess, "run", side_effect=fake_run):
-            cli = GithubCLI(self.context)
-            result = cli.pr_status("123")
-
+        result = self.gh.pr_status(123)
         self.assertEqual(result, payload)
+        mock_run.assert_called_once_with(["pr", "view", "--json", ",".join(PR_FIELDS), "123"])
 
-    def test_repo_status__calls_gh_and_parses_json(self):
+    @mock.patch("gh_worktree.gh.SubprocessOperator.run")
+    def test_pr_status__with_owner_repo(self, mock_run):
+        payload = {"number": 123, "title": "Example"}
+        mock_run.return_value = mock.Mock(
+            spec=subprocess.CompletedProcess, stdout=json.dumps(payload)
+        )
+
+        result = self.gh.pr_status(123, owner_repo="me/repo")
+        self.assertEqual(result, payload)
+        mock_run.assert_called_once_with(
+            ["pr", "view", "--repo", "me/repo", "--json", ",".join(PR_FIELDS), "123"]
+        )
+
+    @mock.patch("gh_worktree.gh.SubprocessOperator.run")
+    def test_repo_status__calls_gh_and_parses_json(self, mock_run):
         payload = {"name": "repo", "owner": "me"}
+        mock_run.return_value = mock.Mock(
+            spec=subprocess.CompletedProcess, stdout=json.dumps(payload)
+        )
 
-        def fake_run(command, capture_output, text, check, cwd):
-            self.assertEqual(command[:4], ["gh", "repo", "view", "--json"])
-            self.assertTrue(capture_output)
-            self.assertTrue(text)
-            self.assertTrue(check)
-            self.assertEqual(cwd, Path("/repo"))
-            return SimpleNamespace(stdout=json.dumps(payload))
-
-        with mock.patch.object(subprocess, "run", side_effect=fake_run):
-            cli = GithubCLI(self.context)
-            result = cli.repo_status()
-
+        result = self.gh.repo_status()
         self.assertEqual(result, payload)
+        mock_run.assert_called_once_with(["repo", "view", "--json", ",".join(REPO_FIELDS)])
