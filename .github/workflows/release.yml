@@ -4,8 +4,8 @@ on:
     types: [published]
 
 jobs:
-  pypi-publish:
-    name: Upload release to PyPI
+  package-release:
+    name: Publish Python package and PEX
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -25,23 +25,57 @@ jobs:
       - name: Set up Python
         run: uv python install
 
-      - name: Build
-        run: make build
+      - name: Build wheel and PEX
+        run: |
+          make clean
+          make build-whl dist/gh-worktree.pex
 
       - name: Upload PEX to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/*.pex
 
-      - name: Upload Binary to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/gh-worktree
-
-      - name: Remove PEX and Binary
-        run: rm -f dist/*.pex dist/gh-worktree
+      - name: Remove PEX
+        run: rm -f dist/*.pex
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+
+  binary-release:
+    name: Upload release binary (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            binary_name: gh-worktree-linux-amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            binary_name: gh-worktree-linux-arm64
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          ignore-nothing-to-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Build binary
+        run: |
+          make clean
+          make dist/gh-worktree
+          mv dist/gh-worktree dist/${{ matrix.binary_name }}
+
+      - name: Upload binary to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/${{ matrix.binary_name }}
