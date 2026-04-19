@@ -1,15 +1,7 @@
-import random
 import re
-import shlex
-import subprocess
 from pathlib import Path
 
 from gh_worktree.errors import AncestorNotFoundError
-
-# Simple ANSI colors for the prefix
-COLOR_YELLOW = "\033[93m"
-COLORS = ["\033[92m", "\033[94m", "\033[95m", "\033[96m", COLOR_YELLOW]
-COLOR_RESET = "\033[0m"
 
 
 def find_up(name: str, start_path: str | Path) -> Path:
@@ -32,51 +24,6 @@ def find_up(name: str, start_path: str | Path) -> Path:
     raise AncestorNotFoundError(f"Could not find {name} in {start_path} ancestors")
 
 
-def _log_prefix(command: list[str]) -> str:
-    """
-    Returns a prefix string for visibility, via logging, into the command being executed
-    :param command: The command list to be executed
-    :return: A string for prefixing log messages
-    """
-    command_prefix = command[:2]
-    command_script_path = Path(command_prefix[0])
-    if command_script_path.exists():
-        command_prefix[0] = command_script_path.name
-
-    return shlex.join(command_prefix)
-
-
-def stream_exec(command: list[str], wait_time: int = 60, cwd: str | Path | None = None) -> int:
-    """
-    Executes a command in a subprocess and streams its output to stdout.
-    :param command: The command to execute as a list of strings
-    :param wait_time: The number of seconds to wait for the process to finish
-    :param cwd: The working directory to execute the command in
-    :return: The exit code of the process
-    """
-    with subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
-        cwd=cwd,
-    ) as process:
-        output_color = COLORS[process.pid % len(COLORS)]
-        print(f"Executing: {output_color}{shlex.join(command)}{COLOR_RESET}")
-
-        for line in process.stdout:
-            print(
-                f"{output_color}{_log_prefix(command)} |{COLOR_RESET} {line}",
-                end="",
-                flush=True,
-            )
-
-        process.wait(wait_time)
-
-    return process.returncode
-
-
 def normalize_worktree_name(name: str) -> str:
     """
     Normalize a worktree name by replacing slashes and other non-alphanumeric
@@ -90,30 +37,3 @@ def normalize_worktree_name(name: str) -> str:
     # Collapse consecutive dashes into a single dash
     result = re.sub(r"-+", "-", result)
     return result
-
-
-def iter_output(command: list[str], wait_time: int = 60, cwd: str | Path | None = None):
-    """
-    Executes a command in a subprocess and iterates its output after completion
-    :param command: The command to execute as a list of strings
-    :param wait_time: The number of seconds to wait for the process to finish
-    :param cwd: The working directory to execute the command in
-    """
-    output_color = random.choice(COLORS)
-    print(f"Executing: {output_color}{shlex.join(command)}{COLOR_RESET}")
-
-    result = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=wait_time,
-        cwd=cwd,
-    )
-
-    for line in result.stdout.splitlines():
-        print(
-            f"{output_color}{_log_prefix(command)} |{COLOR_RESET} {line}",
-            flush=True,
-        )
-        yield line

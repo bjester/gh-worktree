@@ -4,6 +4,7 @@ import stat
 import tempfile
 from pathlib import Path
 from unittest import TestCase, mock
+from unittest.mock import Mock
 
 from gh_worktree.context import Context
 from gh_worktree.errors import HookExistsError
@@ -21,7 +22,7 @@ class HooksTestCase(TestCase):
         self.context.config_dir.mkdir(parents=True, exist_ok=True)
         self.hooks_path.mkdir()
 
-        self.hooks = Hooks(self.context)
+        self.hooks = Hooks(self.context, Mock())
 
     def tearDown(self):
         self.tmp_dir.cleanup()
@@ -57,9 +58,9 @@ class HooksTestCase(TestCase):
         global_config = self.context.get_global_config()
         self.assertEqual(global_config.allowed_hooks[str(hook_file)], checksum)
 
-    @mock.patch("gh_worktree.hooks.Hooks._check_allowed")
-    @mock.patch("gh_worktree.hooks.stream_exec")
-    def test_fire__allowed(self, mock_stream_exec, mock_check_allowed):
+    @mock.patch.object(Hooks, "stream_exec")
+    @mock.patch.object(Hooks, "_check_allowed")
+    def test_fire__allowed(self, mock_check_allowed, mock_stream_exec):
         hook_file = self.hooks_path / Hook.pre_init.name
         hook_file.write_bytes(b"echo ok")
         # Make the hook file executable
@@ -69,10 +70,10 @@ class HooksTestCase(TestCase):
         mock_stream_exec.return_value = 0
 
         self.assertTrue(self.hooks.fire(Hook.pre_init, "arg1"))
-        mock_stream_exec.assert_called_once_with([str(hook_file), "arg1"], cwd=self.tmp_path)
+        mock_stream_exec.assert_called_once_with([str(hook_file), "arg1"])
 
-    @mock.patch("gh_worktree.hooks.Hooks._check_allowed")
-    @mock.patch("gh_worktree.hooks.stream_exec")
+    @mock.patch.object(Hooks, "_check_allowed")
+    @mock.patch.object(Hooks, "stream_exec")
     def test_fire__not_executable(self, mock_stream_exec, mock_check_allowed):
         hook_file = self.hooks_path / Hook.pre_init.name
         hook_file.write_bytes(b"echo ok")
@@ -84,8 +85,8 @@ class HooksTestCase(TestCase):
         self.assertFalse(self.hooks.fire(Hook.pre_init, "arg1"))
         mock_stream_exec.assert_not_called()
 
-    @mock.patch("gh_worktree.hooks.Hooks._check_allowed")
-    @mock.patch("gh_worktree.hooks.stream_exec")
+    @mock.patch.object(Hooks, "_check_allowed")
+    @mock.patch.object(Hooks, "stream_exec")
     def test_fire__disallowed(self, mock_stream_exec, mock_check_allowed):
         hook_file = self.hooks_path / Hook.pre_init.name
         hook_file.write_bytes(b"echo ok")

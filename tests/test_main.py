@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import gh_worktree.main as main_module
 from gh_worktree.errors import AliasConflictError
@@ -30,14 +30,16 @@ class WorktreeCommandsTestCase(TestCase):
         ):
             _ = self.commands._alias_map
 
-    @patch("builtins.print")
-    def test_version__prints_cli_name_and_version(self, print_mock):
+    @patch.object(WorktreeCommands, "_logger", new_callable=lambda: Mock())
+    def test_version__prints_cli_name_and_version(self, mock_logger):
+        self.commands._logger = mock_logger
         self.commands.version()
 
-        print_mock.assert_called_once_with(f"{self.commands._name} {main_module.__version__}")
+        mock_logger.info.assert_called_once_with(f"{self.commands._name} {main_module.__version__}")
 
-    @patch("builtins.print")
-    def test_aliases__prints_only_commands_with_aliases(self, print_mock):
+    @patch.object(WorktreeCommands, "_logger", new_callable=lambda: Mock())
+    def test_aliases__prints_only_commands_with_aliases(self, mock_logger):
+        self.commands._logger = mock_logger
         self.commands._commands = [
             SimpleNamespace(_name="create", _aliases=[]),
             SimpleNamespace(_name="remove", _aliases=["rm"]),
@@ -45,4 +47,4 @@ class WorktreeCommandsTestCase(TestCase):
 
         self.commands.aliases()
 
-        print_mock.assert_called_once_with("remove: rm")
+        mock_logger.info.assert_called_once_with("remove: rm")

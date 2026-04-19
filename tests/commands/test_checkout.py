@@ -40,6 +40,7 @@ class CheckoutCommandTestCase(TestCase):
         self.gh = SimpleNamespace(pr_status=Mock())
         self.templates = SimpleNamespace(copy=Mock())
         self.runtime = SimpleNamespace(
+            logger=Mock(),
             context=self.context,
             hooks=self.hooks,
             git=self.git,

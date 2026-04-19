@@ -1,5 +1,6 @@
 import os
 from contextlib import contextmanager
+from logging import Logger
 from pathlib import Path
 from string import Template
 
@@ -18,8 +19,8 @@ class Templates(ConfigOperator):
     process.
     """
 
-    def __init__(self, context: Context):
-        super().__init__(context)
+    def __init__(self, context: Context, logger: Logger):
+        super().__init__(context, logger)
         self.dir_name = "templates"
         self.replacement_map = {}
 
@@ -54,7 +55,7 @@ class Templates(ConfigOperator):
             dest_path.mkdir(parents=True, exist_ok=True)
             return
 
-        print(f"Copying template {relative_path}")
+        self.logger.info(f"Copying template {relative_path}")
         with absolute_path.open("r", encoding="utf-8") as src:
             with dest_path.open("w", encoding="utf-8") as dest:
                 content = src.read()

@@ -23,7 +23,7 @@ class WorktreeCommands(Command):
         """
         :param verbose: Whether to enable logging verbosity
         """
-        runtime = Runtime(verbose)
+        runtime = Runtime(self._name, verbose)
         super().__init__(runtime)
         self._commands: list[Command] = []
         self._add(CreateCommand(self._runtime))
@@ -57,11 +57,11 @@ class WorktreeCommands(Command):
 
     def version(self):
         """Outputs the version of the CLI"""
-        print(f"{self._name} {__version__}")
+        self._logger.info(f"{self._name} {__version__}")
 
     def aliases(self):
         """Outputs all of the command aliases"""
         for command in self._commands:
             if len(command._aliases) == 0:
                 continue
-            print(f"{command._name}: {', '.join(command._aliases)}")
+            self._logger.info(f"{command._name}: {', '.join(command._aliases)}")

@@ -3,22 +3,34 @@ from gh_worktree.errors import RemoteUsageError
 from gh_worktree.gh import GithubCLI
 from gh_worktree.git import GitCLI, GitRemote
 from gh_worktree.hooks import Hooks
+from gh_worktree.logger import setup_logger
 from gh_worktree.templates import Templates
 
 
 class Runtime:
-    __slots__ = ("verbose", "context", "hooks", "git", "gh", "templates")
+    __slots__ = ("name", "verbose", "context", "logger", "hooks", "git", "gh", "templates")
 
-    def __init__(self, verbose: bool = False):
+    def __init__(self, name: str, verbose: bool = False):
         """
         :param verbose: Whether to enable logging verbosity
         """
+        self.name = name
         self.verbose = verbose
         self.context = Context()
-        self.hooks = Hooks(self.context)
-        self.git = GitCLI(self.context)
-        self.gh = GithubCLI(self.context)
-        self.templates = Templates(self.context)
+
+        log_dir = self.context.global_config_dir / "logs"
+        logger = setup_logger(
+            name=name,
+            log_dir=log_dir,
+            verbose=verbose,
+        )
+        self.logger = logger
+
+        # operators
+        self.hooks = Hooks(self.context, self.logger)
+        self.git = GitCLI(self.context, self.logger)
+        self.gh = GithubCLI(self.context, self.logger)
+        self.templates = Templates(self.context, self.logger)
 
     def get_default_remote(self) -> GitRemote | None:
         return self.get_remote(owner_name=self.context.get_config().owner)

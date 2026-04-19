@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from gh_worktree.templates import TemplateExists, Templates
 
@@ -76,7 +76,7 @@ class TemplatesTestCase(unittest.TestCase):
         """Test that initialization populates replacement_map with environment variables."""
         context = self._create_context(allowed_envvars=["USER", "HOME"])
 
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         self.assertEqual(templates.replacement_map["USER"], "testuser")
         self.assertIn("HOME", templates.replacement_map)
@@ -86,7 +86,7 @@ class TemplatesTestCase(unittest.TestCase):
         """Test that initialization handles missing environment variables gracefully."""
         context = self._create_context(allowed_envvars=["NONEXISTENT_VAR"])
 
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         self.assertIn("NONEXISTENT_VAR", templates.replacement_map)
         self.assertEqual(templates.replacement_map["NONEXISTENT_VAR"], "")
@@ -95,7 +95,7 @@ class TemplatesTestCase(unittest.TestCase):
     def test_copy__creates_worktree_files(self):
         """Test that copy creates files in the worktree directory."""
         context = self._create_context(allowed_envvars=["USER"])
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         # Create worktree directory (normally done by git worktree add)
         worktree_dir = self.project_dir / "my-worktree"
@@ -111,7 +111,7 @@ class TemplatesTestCase(unittest.TestCase):
     def test_copy__substitutes_variables_correctly(self):
         """Test that copy performs variable substitution correctly."""
         context = self._create_context(allowed_envvars=["USER"])
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         # Create worktree directory (normally done by git worktree add)
         worktree_dir = self.project_dir / "my-worktree"
@@ -134,7 +134,7 @@ class TemplatesTestCase(unittest.TestCase):
     def test_copy__substitutes_normalized_worktree_name(self):
         """Test that copy provides WORKTREE_NAME_NORMALIZED variable."""
         context = self._create_context(allowed_envvars=["USER"])
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         # Create worktree directory (normally done by git worktree add)
         worktree_dir = self.project_dir / "feat/some-feature"
@@ -153,7 +153,7 @@ class TemplatesTestCase(unittest.TestCase):
     def test_copy__normalized_replaces_underscores_with_dashes(self):
         """Test that WORKTREE_NAME_NORMALIZED replaces underscores with dashes."""
         context = self._create_context()
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         worktree_dir = self.project_dir / "my_feature-branch"
         worktree_dir.mkdir(parents=True)
@@ -174,7 +174,7 @@ class TemplatesTestCase(unittest.TestCase):
         executable_file.chmod(0o755)
 
         context = self._create_context()
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         # Create worktree directory (normally done by git worktree add)
         worktree_dir = self.project_dir / "my-worktree"
@@ -196,7 +196,7 @@ class TemplatesTestCase(unittest.TestCase):
             empty_project / ".gh" / "worktree",
             self.tmp_path / "empty_global",
         )
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         worktree_dir = empty_project / "my-worktree"
         worktree_dir.mkdir(parents=True)
@@ -212,7 +212,7 @@ class TemplatesTestCase(unittest.TestCase):
         )
 
         context = self._create_context()
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         # Create worktree directory (normally done by git worktree add)
         worktree_dir = self.project_dir / "my-worktree"
@@ -229,7 +229,7 @@ class TemplatesTestCase(unittest.TestCase):
     def test_copy__creates_subdirectories(self):
         """Test that copy creates necessary subdirectories."""
         context = self._create_context()
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         # Create worktree directory (normally done by git worktree add)
         worktree_dir = self.project_dir / "my-worktree"
@@ -241,7 +241,7 @@ class TemplatesTestCase(unittest.TestCase):
 
     def test_add__creates_file(self):
         context = self._create_context()
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         relative_path = ".gh/worktree/templates/example.txt"
         with templates.add(relative_path) as f:
@@ -253,7 +253,7 @@ class TemplatesTestCase(unittest.TestCase):
 
     def test_add__raises_when_existing(self):
         context = self._create_context()
-        templates = Templates(context)
+        templates = Templates(context, Mock())
 
         relative_path = ".gh/worktree/templates/example.txt"
         template_file = self.project_dir / relative_path

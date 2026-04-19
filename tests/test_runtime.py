@@ -8,7 +8,7 @@ from gh_worktree.runtime import Runtime
 
 class RuntimeTestCase(TestCase):
     def setUp(self):
-        self.runtime = Runtime()
+        self.runtime = Runtime(name="test")
         self.config = SimpleNamespace(owner="octo", name="repo")
         self.runtime.context = SimpleNamespace(
             get_config=lambda: self.config,

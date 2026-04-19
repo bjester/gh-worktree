@@ -1,49 +1,38 @@
 import json
-import subprocess
 
-from gh_worktree.context import Context
+from gh_worktree.subprocess import SubprocessOperator
+
+PR_FIELDS = [
+    "number",
+    "author",
+    "baseRefName",
+    "headRefName",
+    "headRepository",
+    "headRepositoryOwner",
+    "state",
+    "title",
+    "url",
+]
+REPO_FIELDS = [
+    "defaultBranchRef",
+    "name",
+    "owner",
+    "url",
+    "isPrivate",
+]
 
 
-class GithubCLI:
-    def __init__(self, context: Context):
-        self.context = context
-
-    def _run(self, *command: str):
-        result = subprocess.run(
-            ["gh", *command],
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd=self.context.cwd,
-        )
-        return result.stdout.strip()
+class GithubCLI(SubprocessOperator):
+    command_name = "gh"
 
     def pr_status(self, pr_number: int | str, owner_repo: str | None = None):
-        fields = [
-            "number",
-            "author",
-            "baseRefName",
-            "headRefName",
-            "headRepository",
-            "headRepositoryOwner",
-            "state",
-            "title",
-            "url",
-        ]
-        args = ["pr", "view", "--json"]
+        args = ["pr", "view"]
         if owner_repo:
             args.extend(["--repo", owner_repo])
-        args.extend([",".join(fields), pr_number])
-        output = self._run("pr", "view", "--json", ",".join(fields), pr_number)
+        args.extend(["--json", ",".join(PR_FIELDS), str(pr_number)])
+        output = self.run(args).stdout
         return json.loads(output)
 
     def repo_status(self):
-        fields = [
-            "defaultBranchRef",
-            "name",
-            "owner",
-            "url",
-            "isPrivate",
-        ]
-        output = self._run("repo", "view", "--json", ",".join(fields))
+        output = self.run(["repo", "view", "--json", ",".join(REPO_FIELDS)]).stdout
         return json.loads(output)

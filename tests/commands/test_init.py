@@ -120,6 +120,7 @@ class InitCommandTestCase(TestCase):
             )
         )
         self.runtime = SimpleNamespace(
+            logger=Mock(),
             context=self.context,
             hooks=self.hooks,
             templates=self.templates,
