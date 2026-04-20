@@ -20,7 +20,7 @@ class Runtime:
 
         log_dir = self.context.global_config_dir / "logs"
         logger = setup_logger(
-            name=name,
+            name,
             log_dir=log_dir,
             verbose=verbose,
         )

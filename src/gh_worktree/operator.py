@@ -12,7 +12,8 @@ class RuntimeOperator:
 
     def __init__(self, context: Context, logger: logging.Logger):
         self.context = context
-        self.logger = logger
+        module_name = self.__class__.__module__.split(".")[-1]
+        self.logger = logger.getChild(module_name)
 
 
 class ConfigOperator(RuntimeOperator):

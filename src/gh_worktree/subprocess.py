@@ -1,32 +1,38 @@
+import logging
 import queue
 import random
 import shlex
 import subprocess
 import threading
 import time
-from collections.abc import Iterator
-from contextlib import ContextDecorator
+from collections.abc import Generator, Iterator
+from contextlib import ContextDecorator, contextmanager
 from pathlib import Path
+from subprocess import CompletedProcess
+from typing import Any
 
-from gh_worktree.logger import COMMAND_OUTPUT
 from gh_worktree.operator import RuntimeOperator
 
 # These are the allowed colors for command output, to avoid conflict with red/yellow errors/warnings
 ALLOWED_COLORS = ["green", "blue", "magenta", "cyan"]
 
 
-def _log_prefix(command: list[str]) -> str:
+def _log_name(command: list[str]) -> str:
     """
     Returns a prefix string for visibility, via logging, into the command being executed
     :param command: The command list to be executed
     :return: A string for prefixing log messages
     """
-    command_prefix = command[:2]
-    command_script_path = Path(command_prefix[0])
+    command_prefix = command[0]
+    command_script_path = Path(command_prefix)
     if command_script_path.exists():
-        command_prefix[0] = command_script_path.name
+        command_prefix = (
+            f"{command_script_path.name}.{command[1]}"
+            if len(command) > 1
+            else command_script_path.name
+        )
 
-    return shlex.join(command_prefix)
+    return command_prefix
 
 
 def _output_thread(process: subprocess.Popen) -> tuple[queue.Queue[str], threading.Thread]:
@@ -83,6 +89,12 @@ class SubprocessOperator(RuntimeOperator):
     command_name: str | None = None
     """The name of the command being executed, prepended to the command list"""
 
+    def _get_command_logger(self, command: list[str]) -> logging.Logger:
+        """Get a dedicated logger for logging command output"""
+        if self.command_name:
+            return logging.getLogger(self.command_name).getChild(_log_name(command))
+        return logging.getLogger(_log_name(command))
+
     def stream_exec(self, command: list[str], cwd: str | Path | None = None) -> int:
         """
         Executes a command in a subprocess and streams its output to stdout.
@@ -90,8 +102,11 @@ class SubprocessOperator(RuntimeOperator):
         :param cwd: The working directory to execute the command in
         :return: The exit code of the process
         """
+        logger = self._get_command_logger(command)
+
         if self.command_name:
             command = [self.command_name, *command]
+
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -106,6 +121,7 @@ class SubprocessOperator(RuntimeOperator):
         try:
             color = ALLOWED_COLORS[process.pid % len(ALLOWED_COLORS)]
             self.logger.info(f"Executing: {shlex.join(command)}", extra={"color": color})
+            logger.debug(f"START: {shlex.join(command)}", extra={"color": color})
 
             while True:
                 remaining = deadline - time.monotonic()
@@ -124,9 +140,8 @@ class SubprocessOperator(RuntimeOperator):
                         break
                     continue
 
-                self.logger.log(
-                    COMMAND_OUTPUT,
-                    f"{_log_prefix(command)} | {line.rstrip()}",
+                logger.debug(
+                    line.rstrip(),
                     extra={"color": color},
                 )
 
@@ -139,41 +154,61 @@ class SubprocessOperator(RuntimeOperator):
             if process.stdout and hasattr(process.stdout, "close"):
                 process.stdout.close()
             reader_thread.join(timeout=0.5)
+            logger.debug(
+                f"END: {shlex.join(command)} ({process.returncode})", extra={"color": color}
+            )
 
         return process.returncode
 
-    @random_color
-    def run(self, command: list[str], cwd: str | Path | None = None) -> subprocess.CompletedProcess:
+    @contextmanager
+    def run(
+        self, command: list[str], cwd: str | Path | None = None
+    ) -> Generator[CompletedProcess, Any, None]:
         """
         Executes a command in a subprocess and returns the completed process
         :param command: The command to execute as a list of strings
         :param cwd: The working directory to execute the command in
         """
+        logger = self._get_command_logger(command)
         if self.command_name:
             command = [self.command_name, *command]
 
-        self.logger.info(f"Executing: {shlex.join(command)}", extra={"color": random_color.color})
+        with random_color:
+            self.logger.info(
+                f"Executing: {shlex.join(command)}", extra={"color": random_color.color}
+            )
+            logger.debug(f"START: {shlex.join(command)}", extra={"color": random_color.color})
+            process = None
 
-        return subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=self.wait_time,
-            cwd=cwd or self.context.cwd,
-        )
+            try:
+                process = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    timeout=self.wait_time,
+                    cwd=cwd or self.context.cwd,
+                )
+                yield process
+            finally:
+                logger.debug(
+                    f"END: {shlex.join(command)} ({getattr(process, 'returncode', None)})",
+                    extra={"color": random_color.color},
+                )
 
-    @random_color
     def iter_output(self, command: list[str], cwd: str | Path | None = None) -> Iterator[str]:
         """
         Executes a command in a subprocess and iterates its output after completion
         :param command: The command to execute as a list of strings
         :param cwd: The working directory to execute the command in
         """
-        for line in self.run(command, cwd=cwd).stdout.splitlines():
-            self.logger.log(
-                COMMAND_OUTPUT,
-                f"{_log_prefix(command)} | {line}",
-                extra={"color": random_color.color},
-            )
-            yield line
+        with random_color:
+            logger = self._get_command_logger(command)
+
+            with self.run(command, cwd=cwd) as process:
+                for line in process.stdout.splitlines():
+                    logger.debug(
+                        line.rstrip(),
+                        extra={"color": random_color.color},
+                    )
+                    yield line

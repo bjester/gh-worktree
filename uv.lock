@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.10"
 
 [options]
-exclude-newer = "2026-04-11T15:53:58.518447459Z"
+exclude-newer = "2026-04-13T00:24:15.537628654Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -50,7 +50,7 @@ wheels = [
 
 [[package]]
 name = "gh-worktree"
-version = "0.3.2"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
