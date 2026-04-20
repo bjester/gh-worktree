@@ -17,9 +17,8 @@ class GithubCLITestCase(TestCase):
     @mock.patch("gh_worktree.gh.SubprocessOperator.run")
     def test_pr_status__calls_gh_and_parses_json(self, mock_run):
         payload = {"number": 123, "title": "Example"}
-        mock_run.return_value = mock.Mock(
-            spec=subprocess.CompletedProcess, stdout=json.dumps(payload)
-        )
+        process = mock.MagicMock(spec=subprocess.CompletedProcess, stdout=json.dumps(payload))
+        mock_run.return_value.__enter__.return_value = process
 
         result = self.gh.pr_status(123)
         self.assertEqual(result, payload)
@@ -28,9 +27,8 @@ class GithubCLITestCase(TestCase):
     @mock.patch("gh_worktree.gh.SubprocessOperator.run")
     def test_pr_status__with_owner_repo(self, mock_run):
         payload = {"number": 123, "title": "Example"}
-        mock_run.return_value = mock.Mock(
-            spec=subprocess.CompletedProcess, stdout=json.dumps(payload)
-        )
+        process = mock.MagicMock(spec=subprocess.CompletedProcess, stdout=json.dumps(payload))
+        mock_run.return_value.__enter__.return_value = process
 
         result = self.gh.pr_status(123, owner_repo="me/repo")
         self.assertEqual(result, payload)
@@ -41,9 +39,8 @@ class GithubCLITestCase(TestCase):
     @mock.patch("gh_worktree.gh.SubprocessOperator.run")
     def test_repo_status__calls_gh_and_parses_json(self, mock_run):
         payload = {"name": "repo", "owner": "me"}
-        mock_run.return_value = mock.Mock(
-            spec=subprocess.CompletedProcess, stdout=json.dumps(payload)
-        )
+        process = mock.MagicMock(spec=subprocess.CompletedProcess, stdout=json.dumps(payload))
+        mock_run.return_value.__enter__.return_value = process
 
         result = self.gh.repo_status()
         self.assertEqual(result, payload)
