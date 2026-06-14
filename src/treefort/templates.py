@@ -4,9 +4,9 @@ from logging import Logger
 from pathlib import Path
 from string import Template
 
-from gh_worktree.context import Context
-from gh_worktree.operator import ConfigOperator
-from gh_worktree.utils import normalize_worktree_name
+from treefort.context import Context
+from treefort.operator import ConfigOperator
+from treefort.utils import normalize_worktree_name
 
 
 class TemplateExists(Exception):

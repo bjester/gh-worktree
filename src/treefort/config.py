@@ -1,6 +1,6 @@
 import json
 
-from gh_worktree.errors import ConfigTypeError
+from treefort.errors import ConfigTypeError
 
 
 class Config:

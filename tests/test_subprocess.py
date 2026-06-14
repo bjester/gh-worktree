@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest import TestCase, mock
 from unittest.mock import MagicMock, Mock
 
-from gh_worktree.subprocess import SubprocessOperator, _log_name
+from treefort.subprocess import SubprocessOperator, _log_name
 
 
 class _SubprocessOperator(SubprocessOperator):
@@ -20,7 +20,7 @@ class SubprocessOperatorTestCase(TestCase):
         self.tmp_path = Path(self.tmp_dir.name)
         self.context = Mock()
         self.context.cwd = self.tmp_path
-        logging_patch = mock.patch("gh_worktree.subprocess.logging")
+        logging_patch = mock.patch("treefort.subprocess.logging")
         self.addCleanup(logging_patch.stop)
         logging_mock = logging_patch.start()
         self.logger = Mock()
@@ -33,7 +33,7 @@ class SubprocessOperatorTestCase(TestCase):
     def tearDown(self):
         self.tmp_dir.cleanup()
 
-    @mock.patch("gh_worktree.subprocess.subprocess.Popen")
+    @mock.patch("treefort.subprocess.subprocess.Popen")
     def test_stream_exec(self, mock_popen):
         process_mock = MagicMock()
         process_mock.stdout = ["line1\n", "line2\n"]
@@ -72,7 +72,7 @@ class SubprocessOperatorTestCase(TestCase):
             "END: test_command do-something (0)",
         )
 
-    @mock.patch("gh_worktree.subprocess.subprocess.Popen")
+    @mock.patch("treefort.subprocess.subprocess.Popen")
     def test_stream_exec__timeout_kills_process(self, mock_popen):
         process_mock = MagicMock()
         process_mock.stdout = []
@@ -87,7 +87,7 @@ class SubprocessOperatorTestCase(TestCase):
         process_mock.kill.assert_called_once_with()
         process_mock.wait.assert_called_once_with()
 
-    @mock.patch("gh_worktree.subprocess.subprocess.run")
+    @mock.patch("treefort.subprocess.subprocess.run")
     def test_run(self, mock_run):
         result_mock = Mock(spec=subprocess.CompletedProcess, stdout="line1\nline2", returncode=0)
         mock_run.return_value = result_mock
@@ -115,7 +115,7 @@ class SubprocessOperatorTestCase(TestCase):
             "END: test_command get-data (0)",
         )
 
-    @mock.patch("gh_worktree.subprocess.subprocess.run")
+    @mock.patch("treefort.subprocess.subprocess.run")
     def test_iter_output(self, mock_run):
         result_mock = Mock(spec=subprocess.CompletedProcess, stdout="line1\nline2", returncode=0)
         mock_run.return_value = result_mock

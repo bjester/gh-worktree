@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['src/gh_worktree/__main__.py'],
+    ['src/treefort/__main__.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='gh-worktree',
+    name='treefort',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

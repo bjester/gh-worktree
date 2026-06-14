@@ -1,9 +1,9 @@
 from types import SimpleNamespace
 from unittest import TestCase
 
-from gh_worktree.errors import RemoteUsageError
-from gh_worktree.git import GitRemote
-from gh_worktree.runtime import Runtime
+from treefort.errors import RemoteUsageError
+from treefort.git import GitRemote
+from treefort.runtime import Runtime
 
 
 class RuntimeTestCase(TestCase):

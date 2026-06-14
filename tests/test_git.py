@@ -2,9 +2,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, mock
 
-from gh_worktree.errors import CommandError, WorktreeNameError
-from gh_worktree.git import GitCLI, GitRemote
-from gh_worktree.logger import setup_logger
+from treefort.errors import CommandError, WorktreeNameError
+from treefort.git import GitCLI, GitRemote
+from treefort.logger import setup_logger
 
 
 class GitCLITestCase(TestCase):
@@ -13,12 +13,12 @@ class GitCLITestCase(TestCase):
         self.logger = setup_logger("test")
         self.cli = GitCLI(self.context, self.logger)
 
-        stream_exec_patcher = mock.patch("gh_worktree.git.SubprocessOperator.stream_exec")
+        stream_exec_patcher = mock.patch("treefort.git.SubprocessOperator.stream_exec")
         self.mock_stream_exec = stream_exec_patcher.start()
         self.addCleanup(stream_exec_patcher.stop)
         self.mock_stream_exec.return_value = 0
 
-        iter_output_patcher = mock.patch("gh_worktree.git.SubprocessOperator.iter_output")
+        iter_output_patcher = mock.patch("treefort.git.SubprocessOperator.iter_output")
         self.mock_iter_output = iter_output_patcher.start()
         self.addCleanup(iter_output_patcher.stop)
 

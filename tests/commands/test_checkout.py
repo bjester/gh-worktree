@@ -4,10 +4,10 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import ANY, Mock
 
-from gh_worktree.commands.checkout import CheckoutCommand
-from gh_worktree.errors import BranchInputError, CommandError, RemoteNotFoundError
-from gh_worktree.git import GitRemote
-from gh_worktree.hooks import Hook
+from treefort.commands.checkout import CheckoutCommand
+from treefort.errors import BranchInputError, CommandError, RemoteNotFoundError
+from treefort.git import GitRemote
+from treefort.hooks import Hook
 
 
 class StubContext:

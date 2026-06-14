@@ -1,7 +1,7 @@
-from gh_worktree.command import Command
-from gh_worktree.errors import WorktreeNotFoundError
-from gh_worktree.hooks import Hook
-from gh_worktree.utils import normalize_worktree_name
+from treefort.command import Command
+from treefort.errors import WorktreeNotFoundError
+from treefort.hooks import Hook
+from treefort.utils import normalize_worktree_name
 
 
 class RemoveCommand(Command):
@@ -18,8 +18,8 @@ class RemoveCommand(Command):
         You may use `--force` to passthrough `--force` to git and force the worktree's deletion.
 
         Examples:
-            gh-worktree remove testing-create
-            gh-worktree remove testing-create --force
+            treefort remove testing-create
+            treefort remove testing-create --force
 
         :param worktree_name: The name of the worktree to remove
         :param force: Whether to force the removal of the worktree, if it's unmerged

@@ -5,9 +5,9 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from gh_worktree.commands.init import InitCommand, RepositoryTarget, normalize
-from gh_worktree.errors import RepositoryPathError
-from gh_worktree.hooks import Hook
+from treefort.commands.init import InitCommand, RepositoryTarget, normalize
+from treefort.errors import RepositoryPathError
+from treefort.hooks import Hook
 
 
 class StubContext:
@@ -96,7 +96,7 @@ class InitCommandTestCase(TestCase):
         self.tmp_dir = tempfile.TemporaryDirectory()
         self.tmp_path = pathlib.Path(self.tmp_dir.name)
         self.project_dir = pathlib.Path("project")
-        self.config_dir = self.tmp_path / ".gh" / "worktree"
+        self.config_dir = self.tmp_path / ".treefort"
         self.context = StubContext(self.tmp_path, self.config_dir)
 
         self.hooks = SimpleNamespace(fire=Mock(), add=MagicMock())
@@ -179,33 +179,29 @@ class InitCommandTestCase(TestCase):
         mock_f.write.assert_called_once_with("echo 'hello'\n")
 
     def test_call__installs_templates(self):
-        self.git.ls_tree.return_value = iter(
-            ["100755 blob ...\t.gh/worktree/templates/example.txt"]
-        )
+        self.git.ls_tree.return_value = iter(["100755 blob ...\t.treefort/templates/example.txt"])
         self.git.cat_file.return_value = iter(["hello"])
         mock_f = self.runtime.templates.add.return_value.__enter__.return_value
 
         command = InitCommand(self.runtime)
         command("octo/repo", str(self.project_dir))
 
-        self.runtime.templates.add.assert_called_once_with(".gh/worktree/templates/example.txt")
+        self.runtime.templates.add.assert_called_once_with(".treefort/templates/example.txt")
         mock_f.write.assert_called_once_with("hello\n")
 
     def test_add_templates__skips_existing(self):
-        from gh_worktree.templates import TemplateExists
+        from treefort.templates import TemplateExists
 
         config = SimpleNamespace(default_branch="main")
-        self.git.ls_tree.return_value = iter(
-            ["100755 blob ...\t.gh/worktree/templates/example.txt"]
-        )
+        self.git.ls_tree.return_value = iter(["100755 blob ...\t.treefort/templates/example.txt"])
         self.runtime.templates.add.side_effect = TemplateExists(
-            "Template .gh/worktree/templates/example.txt already exists."
+            "Template .treefort/templates/example.txt already exists."
         )
 
         command = InitCommand(self.runtime)
         command._add_templates(config)
 
-        self.runtime.templates.add.assert_called_once_with(".gh/worktree/templates/example.txt")
+        self.runtime.templates.add.assert_called_once_with(".treefort/templates/example.txt")
         self.git.cat_file.assert_not_called()
 
     def test_call__yes_true_sets_bypass_allowlist_true(self):

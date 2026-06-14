@@ -2,7 +2,7 @@ import sys
 
 import fire
 
-from gh_worktree.main import WorktreeCommands
+from treefort.main import WorktreeCommands
 
 
 def replace_alias(cli: WorktreeCommands):

@@ -2,9 +2,9 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-import gh_worktree.main as main_module
-from gh_worktree.errors import AliasConflictError
-from gh_worktree.main import WorktreeCommands
+import treefort.main as main_module
+from treefort.errors import AliasConflictError
+from treefort.main import WorktreeCommands
 
 
 class WorktreeCommandsTestCase(TestCase):

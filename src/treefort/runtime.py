@@ -1,10 +1,10 @@
-from gh_worktree.context import Context
-from gh_worktree.errors import RemoteUsageError
-from gh_worktree.gh import GithubCLI
-from gh_worktree.git import GitCLI, GitRemote
-from gh_worktree.hooks import Hooks
-from gh_worktree.logger import setup_logger
-from gh_worktree.templates import Templates
+from treefort.context import Context
+from treefort.errors import RemoteUsageError
+from treefort.gh import GithubCLI
+from treefort.git import GitCLI, GitRemote
+from treefort.hooks import Hooks
+from treefort.logger import setup_logger
+from treefort.templates import Templates
 
 
 class Runtime:
@@ -31,6 +31,9 @@ class Runtime:
         self.git = GitCLI(self.context, self.logger)
         self.gh = GithubCLI(self.context, self.logger)
         self.templates = Templates(self.context, self.logger)
+
+        # run migrations
+        self.context.migrate()
 
     def get_default_remote(self) -> GitRemote | None:
         return self.get_remote(owner_name=self.context.get_config().owner)

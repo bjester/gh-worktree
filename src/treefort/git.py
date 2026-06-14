@@ -3,8 +3,8 @@ from collections import namedtuple
 from collections.abc import Iterator
 from pathlib import Path
 
-from gh_worktree.errors import CommandError, WorktreeNameError
-from gh_worktree.subprocess import SubprocessOperator
+from treefort.errors import CommandError, WorktreeNameError
+from treefort.subprocess import SubprocessOperator
 
 TYPE_RE = re.compile(r"\((.*)\)")
 

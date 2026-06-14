@@ -1,23 +1,23 @@
 from functools import cached_property
 
-from gh_worktree import __version__
-from gh_worktree.command import Command
-from gh_worktree.commands.checkout import CheckoutCommand
-from gh_worktree.commands.create import CreateCommand
-from gh_worktree.commands.init import InitCommand
-from gh_worktree.commands.install import InstallCommand
-from gh_worktree.commands.remove import RemoveCommand
-from gh_worktree.errors import AliasConflictError
-from gh_worktree.runtime import Runtime
+from treefort import __version__
+from treefort.command import Command
+from treefort.commands.checkout import CheckoutCommand
+from treefort.commands.create import CreateCommand
+from treefort.commands.init import InitCommand
+from treefort.commands.install import InstallCommand
+from treefort.commands.remove import RemoveCommand
+from treefort.errors import AliasConflictError
+from treefort.runtime import Runtime
 
 
 class WorktreeCommands(Command):
-    """Github CLI extension for worktrees
+    """CLI tool for managing Git worktrees
 
-    Can be used standalone but still requires the Github CLI (`gh`) to be installed.
+    Can be used standalone but requires the Github CLI (`gh`) to be installed.
     """
 
-    _name = "gh-worktree"
+    _name = "treefort"
 
     def __init__(self, verbose: bool = False):
         """

@@ -1,5 +1,5 @@
-from gh_worktree.context import Context
-from gh_worktree.runtime import Runtime
+from treefort.context import Context
+from treefort.runtime import Runtime
 
 
 class BaseCommand:

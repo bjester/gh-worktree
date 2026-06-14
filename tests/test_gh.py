@@ -4,8 +4,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, mock
 
-from gh_worktree.gh import PR_FIELDS, REPO_FIELDS, GithubCLI
-from gh_worktree.logger import setup_logger
+from treefort.gh import PR_FIELDS, REPO_FIELDS, GithubCLI
+from treefort.logger import setup_logger
 
 
 class GithubCLITestCase(TestCase):
@@ -14,7 +14,7 @@ class GithubCLITestCase(TestCase):
         self.logger = setup_logger("test")
         self.gh = GithubCLI(self.context, self.logger)
 
-    @mock.patch("gh_worktree.gh.SubprocessOperator.run")
+    @mock.patch("treefort.gh.SubprocessOperator.run")
     def test_pr_status__calls_gh_and_parses_json(self, mock_run):
         payload = {"number": 123, "title": "Example"}
         process = mock.MagicMock(spec=subprocess.CompletedProcess, stdout=json.dumps(payload))
@@ -24,7 +24,7 @@ class GithubCLITestCase(TestCase):
         self.assertEqual(result, payload)
         mock_run.assert_called_once_with(["pr", "view", "--json", ",".join(PR_FIELDS), "123"])
 
-    @mock.patch("gh_worktree.gh.SubprocessOperator.run")
+    @mock.patch("treefort.gh.SubprocessOperator.run")
     def test_pr_status__with_owner_repo(self, mock_run):
         payload = {"number": 123, "title": "Example"}
         process = mock.MagicMock(spec=subprocess.CompletedProcess, stdout=json.dumps(payload))
@@ -36,7 +36,7 @@ class GithubCLITestCase(TestCase):
             ["pr", "view", "--repo", "me/repo", "--json", ",".join(PR_FIELDS), "123"]
         )
 
-    @mock.patch("gh_worktree.gh.SubprocessOperator.run")
+    @mock.patch("treefort.gh.SubprocessOperator.run")
     def test_repo_status__calls_gh_and_parses_json(self, mock_run):
         payload = {"name": "repo", "owner": "me"}
         process = mock.MagicMock(spec=subprocess.CompletedProcess, stdout=json.dumps(payload))
