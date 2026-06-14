@@ -6,10 +6,10 @@ from enum import Enum
 from logging import Logger
 from pathlib import Path
 
-from gh_worktree.context import Context
-from gh_worktree.errors import HookError, HookExistsError
-from gh_worktree.operator import ConfigOperator
-from gh_worktree.subprocess import SubprocessOperator
+from treefort.context import Context
+from treefort.errors import HookError, HookExistsError
+from treefort.operator import ConfigOperator
+from treefort.subprocess import SubprocessOperator
 
 
 class Hook(Enum):
@@ -24,7 +24,7 @@ class Hook(Enum):
 
     @property
     def git_path(self):
-        return f".gh/worktree/hooks/{self.name}"
+        return f".treefort/hooks/{self.name}"
 
 
 class HookExists(HookExistsError):

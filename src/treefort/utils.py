@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from gh_worktree.errors import AncestorNotFoundError
+from treefort.errors import AncestorNotFoundError
 
 
 def find_up(name: str, start_path: str | Path) -> Path:

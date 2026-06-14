@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from gh_worktree.commands.install import InstallCommand
+from treefort.commands.install import InstallCommand
 
 
 class InstallCommandTestCase(TestCase):
@@ -18,7 +18,7 @@ class InstallCommandTestCase(TestCase):
     def tearDown(self):
         self.tmp_dir.cleanup()
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -37,11 +37,11 @@ class InstallCommandTestCase(TestCase):
         self.command(gh_ext=True)
 
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -62,9 +62,9 @@ class InstallCommandTestCase(TestCase):
         expected_target = (
             Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-wktr" / "gh-wktr"
         )
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -85,10 +85,10 @@ class InstallCommandTestCase(TestCase):
         expected_target = (
             Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
         )
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)
 
     @patch.dict(os.environ, {"PATH": f"{Path.home()}/.local/bin:/usr/bin"})
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -106,11 +106,11 @@ class InstallCommandTestCase(TestCase):
     ):
         self.command(path_bin=True)
 
-        expected_target = Path.home() / ".local" / "bin" / "gh-worktree"
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        expected_target = Path.home() / ".local" / "bin" / "treefort"
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)
 
     @patch.dict(os.environ, {"PATH": f"{Path.home()}/.local/bin:/usr/bin"})
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -129,10 +129,10 @@ class InstallCommandTestCase(TestCase):
         self.command(alias="wktr", path_bin=True)
 
         expected_target = Path.home() / ".local" / "bin" / "wktr"
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)
 
     @patch.dict(os.environ, {"PATH": "/usr/bin:/usr/local/bin"})
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     def test_call__fails_when_no_suitable_path_directory_found(self):
         with self.assertRaises(SystemExit) as cm:
             self.command(path_bin=True)
@@ -142,7 +142,7 @@ class InstallCommandTestCase(TestCase):
             "Could not find a suitable user binary directory in your PATH."
         )
 
-    @patch("sys.argv", ["/home/user/gh-worktree/src/gh_worktree/main.py"])
+    @patch("sys.argv", ["/home/user/treefort/src/treefort/main.py"])
     @patch("pathlib.Path.symlink_to", autospec=True)
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.exists", return_value=False)
@@ -152,13 +152,13 @@ class InstallCommandTestCase(TestCase):
     ):
         self.command(gh_ext=True)
 
-        expected_source = Path("/home/user/gh-worktree/src/gh_worktree/main.py")
+        expected_source = Path("/home/user/treefort/src/treefort/main.py")
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
         mock_symlink.assert_called_once_with(expected_target, expected_source)
 
-    @patch("sys.argv", ["/home/user/gh-worktree/.venv/bin/gh-worktree"])
+    @patch("sys.argv", ["/home/user/treefort/.venv/bin/treefort"])
     @patch("pathlib.Path.symlink_to", autospec=True)
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.exists", return_value=False)
@@ -168,13 +168,13 @@ class InstallCommandTestCase(TestCase):
     ):
         self.command(gh_ext=True)
 
-        expected_source = Path("/home/user/gh-worktree/.venv/bin/gh-worktree")
+        expected_source = Path("/home/user/treefort/.venv/bin/treefort")
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
         mock_symlink.assert_called_once_with(expected_target, expected_source)
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -192,14 +192,14 @@ class InstallCommandTestCase(TestCase):
     ):
         self.command(gh_ext=True)
 
-        expected_source = Path("/usr/bin/gh-worktree")
+        expected_source = Path("/usr/bin/treefort")
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
         mock_copy.assert_called_once_with(expected_source, expected_target)
         mock_chmod.assert_called_once()
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree.pex"])
+    @patch("sys.argv", ["/usr/bin/treefort.pex"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -217,13 +217,13 @@ class InstallCommandTestCase(TestCase):
     ):
         self.command(gh_ext=True)
 
-        expected_source = Path("/usr/bin/gh-worktree.pex")
+        expected_source = Path("/usr/bin/treefort.pex")
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
         mock_copy.assert_called_once_with(expected_source, expected_target)
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("builtins.input", return_value="1")
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
@@ -244,12 +244,12 @@ class InstallCommandTestCase(TestCase):
         self.command()
 
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)
 
     @patch.dict(os.environ, {"PATH": f"{Path.home()}/.local/bin:/usr/bin"})
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("builtins.input", return_value="2")
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
@@ -269,10 +269,10 @@ class InstallCommandTestCase(TestCase):
     ):
         self.command()
 
-        expected_target = Path.home() / ".local" / "bin" / "gh-worktree"
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        expected_target = Path.home() / ".local" / "bin" / "treefort"
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("builtins.input", return_value="3")
     @patch("sys.exit")
     def test_call__exits_when_invalid_choice(self, mock_exit, mock_input):
@@ -281,7 +281,7 @@ class InstallCommandTestCase(TestCase):
         mock_exit.assert_called_once_with(1)
         self.runtime.logger.error.assert_called_with("Invalid choice")
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("pathlib.Path.exists", return_value=True)
     @patch("pathlib.Path.is_symlink", return_value=False)
     def test_call__exits_when_target_exists_without_force(self, mock_is_symlink, mock_exists):
@@ -290,13 +290,13 @@ class InstallCommandTestCase(TestCase):
 
         self.assertEqual(cm.exception.code, 1)
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
         self.runtime.logger.warning.assert_called_with(
             f"Path already exists, use --force to overwrite: {expected_target}"
         )
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("pathlib.Path.exists", return_value=False)
     @patch("pathlib.Path.is_symlink", return_value=True)
     def test_call__exits_when_target_is_symlink_without_force(self, mock_is_symlink, mock_exists):
@@ -305,13 +305,13 @@ class InstallCommandTestCase(TestCase):
 
         self.assertEqual(cm.exception.code, 1)
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
         self.runtime.logger.warning.assert_called_with(
             f"Path already exists, use --force to overwrite: {expected_target}"
         )
 
-    @patch("sys.argv", ["/usr/bin/gh-worktree"])
+    @patch("sys.argv", ["/usr/bin/treefort"])
     @patch("shutil.copy")
     @patch("pathlib.Path.mkdir")
     @patch("pathlib.Path.chmod")
@@ -332,7 +332,7 @@ class InstallCommandTestCase(TestCase):
         self.command(gh_ext=True, force=True)
 
         expected_target = (
-            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-worktree" / "gh-worktree"
+            Path.home() / ".local" / "share" / "gh" / "extensions" / "gh-treefort" / "gh-treefort"
         )
         mock_unlink.assert_called_once_with(True)
-        mock_copy.assert_called_once_with(Path("/usr/bin/gh-worktree"), expected_target)
+        mock_copy.assert_called_once_with(Path("/usr/bin/treefort"), expected_target)

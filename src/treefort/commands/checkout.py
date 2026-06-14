@@ -1,11 +1,11 @@
 import re
 from functools import cached_property
 
-from gh_worktree.command import Command
-from gh_worktree.errors import BranchInputError, CommandError, RemoteNotFoundError, RemoteUsageError
-from gh_worktree.hooks import Hook
-from gh_worktree.runtime import Runtime
-from gh_worktree.utils import normalize_worktree_name
+from treefort.command import Command
+from treefort.errors import BranchInputError, CommandError, RemoteNotFoundError, RemoteUsageError
+from treefort.hooks import Hook
+from treefort.runtime import Runtime
+from treefort.utils import normalize_worktree_name
 
 URL_RE = re.compile(r"^https://github\.com/[a-z0-9-]+/[\w.-]+/pull/\d+$", re.IGNORECASE)
 BRANCH_RE = re.compile(r"^[\w.-/]+$", re.IGNORECASE)
@@ -102,10 +102,10 @@ class CheckoutCommand(Command):
         passing a branch name.
 
         Examples:
-            gh-worktree checkout 1234
-            gh-worktree checkout https://github.com/octo/repo/pull/1234
-            gh-worktree checkout my-local-branch
-            gh-worktree checkout a-branch --remote upstream
+            treefort checkout 1234
+            treefort checkout https://github.com/octo/repo/pull/1234
+            treefort checkout my-local-branch
+            treefort checkout a-branch --remote upstream
 
         :param branch_or_pr: The branch, PR number, or PR URL to create as a worktree
         :param remote: If `branch_or_pr` is a branch, this may be set to choose the remote to use

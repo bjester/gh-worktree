@@ -1,11 +1,11 @@
 import re
 from urllib import parse
 
-from gh_worktree.command import Command
-from gh_worktree.config import RepositoryConfig
-from gh_worktree.errors import ProjectExistsError, RepositoryPathError
-from gh_worktree.hooks import Hook, HookExists
-from gh_worktree.templates import TemplateExists
+from treefort.command import Command
+from treefort.config import RepositoryConfig
+from treefort.errors import ProjectExistsError, RepositoryPathError
+from treefort.hooks import Hook, HookExists
+from treefort.templates import TemplateExists
 
 JUST_PATH_RE = re.compile(r"^[\w\-_]+/[\w\-_]+$")
 GIT_EXT_RE = re.compile(r"\.git$")
@@ -57,13 +57,13 @@ class RepositoryTarget:
 
 
 class InitCommand(Command):
-    """Initialize a project for use with gh-worktree"""
+    """Initialize a project for use with treefort"""
 
     _name = "init"
 
     def __call__(self, repo: str, *destination_dir: str | None, yes: bool = False):
         """
-        Initialize a project for using gh-worktree with it, by cloning the project and configuring
+        Initialize a project for using treefort with it, by cloning the project and configuring
         it to be a bare git repo.
 
         This command creates a suitable structure for worktree directories within the project
@@ -71,10 +71,10 @@ class InitCommand(Command):
         uses `gh` to gather additional information about the project.
 
         Examples:
-            gh-worktree init https://github.com/bjester/gh-worktree.git
-            gh-worktree init ssh@github.com:bjester/gh-worktree.git
-            gh-worktree init bjester/gh-worktree
-            gh-worktree init bjester/gh-worktree gh-worktree-second
+            treefort init https://github.com/bjester/treefort.git
+            treefort init ssh@github.com:bjester/treefort.git
+            treefort init bjester/treefort
+            treefort init bjester/treefort treefort-second
 
         :param repo: The URI, or Github 'owner/repo', to clone
         :type repo: str
@@ -153,9 +153,7 @@ class InitCommand(Command):
     def _add_templates(self, config):
         """Checks whether the repo has templates in the default branch and copies them"""
         # check to see if repo has templates
-        for template_ls in self._runtime.git.ls_tree(
-            config.default_branch, ".gh/worktree/templates"
-        ):
+        for template_ls in self._runtime.git.ls_tree(config.default_branch, ".treefort/templates"):
             template_file = template_ls.split("\t")[1].strip('"')
             # copy it
             try:

@@ -5,9 +5,9 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import Mock
 
-from gh_worktree.commands.remove import RemoveCommand
-from gh_worktree.errors import WorktreeNotFoundError
-from gh_worktree.hooks import Hook
+from treefort.commands.remove import RemoveCommand
+from treefort.errors import WorktreeNotFoundError
+from treefort.hooks import Hook
 
 
 class StubContext:

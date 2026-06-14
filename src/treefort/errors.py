@@ -1,5 +1,5 @@
 class WorktreeError(Exception):
-    """Base exception for all gh-worktree errors"""
+    """Base exception for all treefort errors"""
 
     pass
 

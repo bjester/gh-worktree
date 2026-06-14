@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.10"
 
 [options]
-exclude-newer = "2026-06-07T16:47:07.670916188Z"
+exclude-newer = "2026-06-07T16:49:26.030519582Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -46,37 +46,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c0/00/f8d10588d2019d6d6452653def1ee807353b21983db48550318424b5ff18/fire-0.7.1.tar.gz", hash = "sha256:3b208f05c736de98fb343310d090dcc4d8c78b2a89ea4f32b837c586270a9cbf", size = 88720, upload-time = "2025-08-16T20:20:24.175Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/4c/93d0f85318da65923e4b91c1c2ff03d8a458cbefebe3bc612a6693c7906d/fire-0.7.1-py3-none-any.whl", hash = "sha256:e43fd8a5033a9001e7e2973bab96070694b9f12f2e0ecf96d4683971b5ab1882", size = 115945, upload-time = "2025-08-16T20:20:22.87Z" },
-]
-
-[[package]]
-name = "gh-worktree"
-version = "0.5.0b0"
-source = { editable = "." }
-dependencies = [
-    { name = "fire" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
-    { name = "pex" },
-    { name = "prek" },
-    { name = "pyinstaller" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "fire", specifier = ">=0.7.1" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
-    { name = "pex", specifier = ">=2.88.1" },
-    { name = "prek" },
-    { name = "pyinstaller" },
-    { name = "pytest", specifier = ">=8.0.0" },
-    { name = "ruff", specifier = ">=0.15.10" },
 ]
 
 [[package]]
@@ -333,6 +302,37 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/de/69/9aa0c6a505c2f80e519b43764f8b4ba93b5a0bbd2d9a9de6e2b24271b9a5/tomli-2.4.0-cp314-cp314t-win_amd64.whl", hash = "sha256:2add28aacc7425117ff6364fe9e06a183bb0251b03f986df0e78e974047571fd", size = 120504, upload-time = "2026-01-11T11:22:35.764Z" },
     { url = "https://files.pythonhosted.org/packages/b3/9f/f1668c281c58cfae01482f7114a4b88d345e4c140386241a1a24dcc9e7bc/tomli-2.4.0-cp314-cp314t-win_arm64.whl", hash = "sha256:2b1e3b80e1d5e52e40e9b924ec43d81570f0e7d09d11081b797bc4692765a3d4", size = 99561, upload-time = "2026-01-11T11:22:36.624Z" },
     { url = "https://files.pythonhosted.org/packages/23/d1/136eb2cb77520a31e1f64cbae9d33ec6df0d78bdf4160398e86eec8a8754/tomli-2.4.0-py3-none-any.whl", hash = "sha256:1f776e7d669ebceb01dee46484485f43a4048746235e683bcdffacdf1fb4785a", size = 14477, upload-time = "2026-01-11T11:22:37.446Z" },
+]
+
+[[package]]
+name = "treefort"
+version = "0.5.0b0"
+source = { editable = "." }
+dependencies = [
+    { name = "fire" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
+    { name = "pex" },
+    { name = "prek" },
+    { name = "pyinstaller" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "fire", specifier = ">=0.7.1" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
+    { name = "pex", specifier = ">=2.88.1" },
+    { name = "prek" },
+    { name = "pyinstaller" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "ruff", specifier = ">=0.15.10" },
 ]
 
 [[package]]

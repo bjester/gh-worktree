@@ -48,20 +48,20 @@ cd playground
 
 # Test 1: Init from remote
 echo "[TEST 1] Initializing from remote repository..."
-uv run gh-worktree init https://github.com/bjester/gh-worktree-recipes.git
+uv run treefort init https://github.com/bjester/treefort-recipes.git
 
 echo "[VERIFY 1] Checking worktree structure..."
-assert_dir_exists "gh-worktree-recipes"
-cd gh-worktree-recipes
+assert_dir_exists "treefort-recipes"
+cd treefort-recipes
 
-assert_dir_exists ".gh"
+assert_dir_exists ".treefort"
 assert_dir_exists ".bare"
 assert_file_exists ".git"
 echo "PASS: Worktree structure verified"
 
 # Test 2: Create worktree from default branch
 echo "[TEST 2] Creating worktree from default branch..."
-uv run gh-worktree create integ-test-default
+uv run treefort create integ-test-default
 
 assert_dir_exists "integ-test-default"
 cd integ-test-default
@@ -73,7 +73,7 @@ echo "PASS: integ-test-default created with correct branch based on main"
 
 # Test 3: Create worktree from main branch
 echo "[TEST 3] Creating worktree from main branch..."
-uv run gh-worktree create integ-test-branch main
+uv run treefort create integ-test-branch main
 
 assert_dir_exists "integ-test-branch"
 cd integ-test-branch
@@ -85,7 +85,7 @@ echo "PASS: integ-test-branch created with correct branch based on main"
 
 # Test 4: Create worktree from remote branch
 echo "[TEST 4] Creating worktree from origin/main..."
-uv run gh-worktree create integ-test-remote-branch origin/main
+uv run treefort create integ-test-remote-branch origin/main
 
 assert_dir_exists "integ-test-remote-branch"
 cd integ-test-remote-branch
@@ -97,7 +97,7 @@ echo "PASS: integ-test-remote-branch created with correct branch based on main"
 
 # Test 5: Error handling - non-existent remote
 echo "[TEST 5] Testing error handling for non-existent remote..."
-if uv run gh-worktree create integ-test-invalid nonexistent/branch 2>/dev/null; then
+if uv run treefort create integ-test-invalid nonexistent/branch 2>/dev/null; then
     echo "FAIL: Should have failed for non-existent remote"
     exit 1
 fi
@@ -105,7 +105,7 @@ echo "PASS: Correctly rejected non-existent remote"
 
 # Test 6: Checkout command
 echo "[TEST 6] Testing checkout command..."
-uv run gh-worktree checkout 2
+uv run treefort checkout 2
 
 assert_dir_exists "for-integration"
 assert_file_exists "for-integration/README.md"
@@ -123,10 +123,10 @@ echo "PASS: Checkout created for-integration with correct README"
 
 # Test 7: Cleanup - remove all worktrees
 echo "[TEST 7] Cleaning up worktrees..."
-uv run gh-worktree rm integ-test-default
-uv run gh-worktree rm integ-test-branch
-uv run gh-worktree rm integ-test-remote-branch
-uv run gh-worktree rm for-integration
+uv run treefort rm integ-test-default
+uv run treefort rm integ-test-branch
+uv run treefort rm integ-test-remote-branch
+uv run treefort rm for-integration
 
 if [ -d "integ-test-default" ]; then
     echo "FAIL: integ-test-default/ still exists after rm"

@@ -1,6 +1,6 @@
-from gh_worktree.command import Command
-from gh_worktree.hooks import Hook
-from gh_worktree.utils import normalize_worktree_name
+from treefort.command import Command
+from treefort.hooks import Hook
+from treefort.utils import normalize_worktree_name
 
 
 class CreateCommand(Command):
@@ -17,10 +17,10 @@ class CreateCommand(Command):
         specify prefix it with the remote name and a slash, e.g. `remote/branch/name`.
 
         Examples:
-            gh-worktree create testing-create
-            gh-worktree create testing-create main
-            gh-worktree create testing-create upstream/main
-            gh-worktree create testing-create upstream/some/other/branch
+            treefort create testing-create
+            treefort create testing-create main
+            treefort create testing-create upstream/main
+            treefort create testing-create upstream/some/other/branch
 
         :param worktree_name: The name of the worktree
         :param base_ref: The base reference to create the worktree from

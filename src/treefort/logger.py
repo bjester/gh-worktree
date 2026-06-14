@@ -1,4 +1,4 @@
-"""Logging utility for gh-worktree CLI."""
+"""Logging utility for treefort CLI."""
 
 import logging
 import sys
@@ -62,7 +62,7 @@ def setup_logger(
     Set up logging with console and file handlers.
 
     :param name: Logger name
-    :param log_dir: Directory for log files (defaults to ~/.gh/worktree/logs)
+    :param log_dir: Directory for log files (defaults to ~/.treefort/logs)
     :param verbose: Enable debug logging with full subprocess output
     :param debug_log_path: Specific path for debug log file
     :param max_log_size: Maximum size of log files in bytes
@@ -90,7 +90,7 @@ def setup_logger(
         log_dir.mkdir(parents=True, exist_ok=True)
 
         # Default log file - timestamps and commands
-        default_log_file = log_dir / "gh-worktree.log"
+        default_log_file = log_dir / "treefort.log"
         file_fmt = "%(asctime)s [%(levelname)s] %(name)s | %(message)s"
         file_formatter = logging.Formatter(file_fmt, datefmt="%Y-%m-%d %H:%M:%S")
 
@@ -103,7 +103,7 @@ def setup_logger(
 
         # Debug log file (if verbose or debug_log_path specified)
         if verbose or debug_log_path:
-            debug_file = debug_log_path or (log_dir / "gh-worktree-debug.log")
+            debug_file = debug_log_path or (log_dir / "treefort-debug.log")
             debug_formatter = logging.Formatter(
                 "%(asctime)s [%(levelname)s] %(name)s | %(message)s",
                 datefmt="%Y-%m-%d %H:%M:%S",

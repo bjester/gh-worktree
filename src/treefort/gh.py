@@ -1,6 +1,6 @@
 import json
 
-from gh_worktree.subprocess import SubprocessOperator
+from treefort.subprocess import SubprocessOperator
 
 PR_FIELDS = [
     "number",

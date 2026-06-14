@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterator
 from pathlib import Path
 
-from gh_worktree.context import Context
+from treefort.context import Context
 
 
 class RuntimeOperator:

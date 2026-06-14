@@ -4,7 +4,7 @@ import stat
 import sys
 from pathlib import Path
 
-from gh_worktree.command import Command
+from treefort.command import Command
 
 
 class InstallCommand(Command):
@@ -17,7 +17,7 @@ class InstallCommand(Command):
         path_bin: bool = False,
         force: bool = False,
     ):
-        """Installs gh-worktree as a GitHub CLI extension or to the user's PATH.
+        """Installs treefort as a GitHub CLI extension or to the user's PATH.
 
         Without specifying options, the install command will ask you what to do.
 
@@ -26,7 +26,7 @@ class InstallCommand(Command):
         :param path_bin: Install to the user's PATH.
         :param force: Overwrite existing files.
         """
-        target_name = alias or "gh-worktree"
+        target_name = alias or "treefort"
         gh_ext, path_bin = self._ask(target_name, gh_ext, path_bin)
 
         current_script_path = Path(sys.argv[0]).resolve()
@@ -36,13 +36,14 @@ class InstallCommand(Command):
         if current_script_path.suffix == ".py":
             should_link = True
         elif not current_script_path.suffix and str(current_script_path).endswith(
-            ".venv/bin/gh-worktree"
+            ".venv/bin/treefort"
         ):
             should_link = True
 
         target_paths = []
 
         if gh_ext:
+            # gh cli expects that it has `gh-` prefix
             ext_name = target_name
             if not ext_name.startswith("gh-"):
                 ext_name = f"gh-{target_name}"

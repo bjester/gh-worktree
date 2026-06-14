@@ -1,12 +1,12 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-import gh_worktree.cli as cli_module
-from gh_worktree.cli import main, replace_alias, replace_verbose
+import treefort.cli as cli_module
+from treefort.cli import main, replace_alias, replace_verbose
 
 
 class ReplaceAliasTestCase(TestCase):
-    @patch("gh_worktree.cli.sys.argv", ["gh-worktree", "rm", "feature-branch"])
+    @patch("treefort.cli.sys.argv", ["treefort", "rm", "feature-branch"])
     def test_rewrites_first_arg_when_alias_exists(self):
         cli = Mock()
         cli._alias_map = {"rm": "remove"}
@@ -16,7 +16,7 @@ class ReplaceAliasTestCase(TestCase):
         self.assertEqual("remove", cli._alias_map["rm"])
         self.assertEqual("remove", cli_module.sys.argv[1])
 
-    @patch("gh_worktree.cli.sys.argv", ["gh-worktree", "remove", "feature-branch"])
+    @patch("treefort.cli.sys.argv", ["treefort", "remove", "feature-branch"])
     def test_noop_when_arg_is_not_alias(self):
         cli = Mock()
         cli._alias_map = {"rm": "remove"}
@@ -25,21 +25,21 @@ class ReplaceAliasTestCase(TestCase):
 
         self.assertEqual("remove", cli_module.sys.argv[1])
 
-    @patch("gh_worktree.cli.sys.argv", ["gh-worktree"])
+    @patch("treefort.cli.sys.argv", ["treefort"])
     def test_noop_when_no_subcommand(self):
         cli = Mock()
         cli._alias_map = {"rm": "remove"}
 
         replace_alias(cli)
 
-        self.assertEqual(["gh-worktree"], cli_module.sys.argv)
+        self.assertEqual(["treefort"], cli_module.sys.argv)
 
 
 class MainTestCase(TestCase):
-    @patch("gh_worktree.cli.fire.Fire")
-    @patch("gh_worktree.cli.replace_alias")
-    @patch("gh_worktree.cli.replace_verbose")
-    @patch("gh_worktree.cli.WorktreeCommands")
+    @patch("treefort.cli.fire.Fire")
+    @patch("treefort.cli.replace_alias")
+    @patch("treefort.cli.replace_verbose")
+    @patch("treefort.cli.WorktreeCommands")
     def test_main__builds_component_replaces_aliases_and_invokes_fire(
         self,
         commands_cls_mock,
@@ -60,49 +60,49 @@ class MainTestCase(TestCase):
 
 
 class ReplaceVerboseTestCase(TestCase):
-    @patch("gh_worktree.cli.sys.argv", ["gh-worktree", "-v", "remove", "feature"])
+    @patch("treefort.cli.sys.argv", ["treefort", "-v", "remove", "feature"])
     def test_rewrites_args_and_returns_true_for_short_flag(self):
         is_verbose = replace_verbose()
 
         self.assertTrue(is_verbose)
-        self.assertEqual(["gh-worktree", "remove", "feature"], cli_module.sys.argv)
+        self.assertEqual(["treefort", "remove", "feature"], cli_module.sys.argv)
 
     @patch(
-        "gh_worktree.cli.sys.argv",
-        ["gh-worktree", "--verbose", "remove", "feature"],
+        "treefort.cli.sys.argv",
+        ["treefort", "--verbose", "remove", "feature"],
     )
     def test_rewrites_args_and_returns_true_for_long_flag(self):
         is_verbose = replace_verbose()
 
         self.assertTrue(is_verbose)
-        self.assertEqual(["gh-worktree", "remove", "feature"], cli_module.sys.argv)
+        self.assertEqual(["treefort", "remove", "feature"], cli_module.sys.argv)
 
     @patch(
-        "gh_worktree.cli.sys.argv",
-        ["gh-worktree", "-v", "--verbose", "remove", "feature"],
+        "treefort.cli.sys.argv",
+        ["treefort", "-v", "--verbose", "remove", "feature"],
     )
     def test_consumes_all_verbose_flags_before_passthrough_separator(self):
         is_verbose = replace_verbose()
 
         self.assertTrue(is_verbose)
-        self.assertEqual(["gh-worktree", "remove", "feature"], cli_module.sys.argv)
+        self.assertEqual(["treefort", "remove", "feature"], cli_module.sys.argv)
 
     @patch(
-        "gh_worktree.cli.sys.argv",
-        ["gh-worktree", "remove", "--", "--verbose", "-v", "feature"],
+        "treefort.cli.sys.argv",
+        ["treefort", "remove", "--", "--verbose", "-v", "feature"],
     )
     def test_does_not_strip_verbose_flags_after_passthrough_separator(self):
         is_verbose = replace_verbose()
 
         self.assertFalse(is_verbose)
         self.assertEqual(
-            ["gh-worktree", "remove", "--", "--verbose", "-v", "feature"],
+            ["treefort", "remove", "--", "--verbose", "-v", "feature"],
             cli_module.sys.argv,
         )
 
-    @patch("gh_worktree.cli.sys.argv", ["gh-worktree", "remove", "feature"])
+    @patch("treefort.cli.sys.argv", ["treefort", "remove", "feature"])
     def test_noop_when_no_verbose_flag_is_present(self):
         is_verbose = replace_verbose()
 
         self.assertFalse(is_verbose)
-        self.assertEqual(["gh-worktree", "remove", "feature"], cli_module.sys.argv)
+        self.assertEqual(["treefort", "remove", "feature"], cli_module.sys.argv)

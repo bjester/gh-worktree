@@ -2,12 +2,12 @@
 
 ## Introduction
 
-This document governs the project `gh-worktree`. The project is a CLI utility that assists software developers in their use of git worktrees. The project uses `python-fire` to provide the CLI and is structured into classes which represent the commands that can be invoked.
+This document governs the project `treefort`. The project is a CLI utility that assists software developers in their use of git worktrees. The project uses `python-fire` to provide the CLI and is structured into classes which represent the commands that can be invoked.
 
 ## Structure
-- The source code is located in `src/gh_worktree/`
-- The primary CLI command class is located in `src/gh_worktree/main.py`
-- The sub-command classes are located in `src/gh_worktree/commands/`
+- The source code is located in `src/treefort/`
+- The primary CLI command class is located in `src/treefort/main.py`
+- The sub-command classes are located in `src/treefort/commands/`
 - The tests are located in `tests/`
 
 ## Development environment
@@ -23,7 +23,7 @@ This document governs the project `gh-worktree`. The project is a CLI utility th
 - Use `uv sync --dev` to install python packages.
 - Use `uv run pytest` to run the test suite.
 - Use `make build` to build the project, generating `.whl` and `.pex` files in `dist/`.
-- The `gh-worktree` command can be tested within the `playground/` directory
+- The `treefort` command can be tested within the `playground/` directory
 - Find CI plans in the .github/workflows folder.
 
 ## Style Guide

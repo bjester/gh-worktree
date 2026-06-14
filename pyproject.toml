@@ -1,5 +1,5 @@
 [project]
-name = "gh-worktree"
+name = "treefort"
 version = "0.5.0b0"
 description = "github CLI extension for worktrees"
 readme = "README.md"
@@ -29,12 +29,12 @@ dependencies = [
 ]
 
 [project.scripts]
-gh-worktree = "gh_worktree.cli:main"
+treefort = "treefort.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/bjester/gh-worktree"
-Repository = "https://github.com/bjester/gh-worktree"
-Issues = "https://github.com/bjester/gh-worktree/issues"
+Homepage = "https://github.com/bjester/treefort"
+Repository = "https://github.com/bjester/treefort"
+Issues = "https://github.com/bjester/treefort/issues"
 
 [dependency-groups]
 dev = [
@@ -69,6 +69,7 @@ source-exclude = [
     ".envrc",
     ".idea/",
     ".gh/",
+    ".treefort/",
     ".git/",
     "playground/",
     "dist/"

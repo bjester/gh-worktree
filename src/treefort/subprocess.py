@@ -11,7 +11,7 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from typing import Any
 
-from gh_worktree.operator import RuntimeOperator
+from treefort.operator import RuntimeOperator
 
 # These are the allowed colors for command output, to avoid conflict with red/yellow errors/warnings
 ALLOWED_COLORS = ["green", "blue", "magenta", "cyan"]
