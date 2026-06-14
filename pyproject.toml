@@ -26,6 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "fire>=0.7.1",
+    "tomlkit>=0.15.0",
 ]
 
 [project.scripts]

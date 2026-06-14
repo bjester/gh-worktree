@@ -36,13 +36,11 @@ class HooksTestCase(TestCase):
         checksum = hashlib.sha256(hook_file.read_bytes()).hexdigest()
 
         global_config.allow_hook(str(hook_file), checksum)
-        self.context.set_config(global_config)
 
         self.assertTrue(self.hooks._check_allowed(hook_file))
 
         mock_input.assert_not_called()
-        global_config = self.context.get_global_config()
-        self.assertEqual(global_config.allowed_hooks[str(hook_file)], checksum)
+        self.assertEqual(global_config.allowed_hooks.get(str(hook_file)), checksum)
 
     @mock.patch("treefort.hooks.input")
     def test_check_allowed__prompts_and_saves(self, mock_input):
@@ -56,7 +54,7 @@ class HooksTestCase(TestCase):
 
         mock_input.assert_called_once()
         global_config = self.context.get_global_config()
-        self.assertEqual(global_config.allowed_hooks[str(hook_file)], checksum)
+        self.assertEqual(global_config.allowed_hooks.get(str(hook_file)), checksum)
 
     @mock.patch.object(Hooks, "stream_exec")
     @mock.patch.object(Hooks, "_check_allowed")

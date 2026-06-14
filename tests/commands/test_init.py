@@ -15,6 +15,11 @@ class StubContext:
         self.cwd = cwd
         self.config_dir = config_dir
         self.reset_called = False
+        self.saved_configs = []
+
+    @property
+    def project_dir(self) -> pathlib.Path:
+        return self.cwd
 
     @contextmanager
     def use(self, cwd):
@@ -27,6 +32,15 @@ class StubContext:
 
     def reset_properties(self):
         self.reset_called = True
+
+    def get_config(self):
+        return None
+
+    def get_global_config(self):
+        return None
+
+    def set_config(self, config):
+        self.saved_configs.append(config)
 
 
 class NormalizeTestCase(TestCase):
@@ -144,8 +158,12 @@ class InitCommandTestCase(TestCase):
         gitdir_file = self.tmp_path / self.project_dir / ".git"
         self.assertEqual(gitdir_file.read_text(), "gitdir: ./.bare")
         self.assertTrue(self.context.reset_called)
-        config_file = self.config_dir / "config.json"
-        self.assertTrue(config_file.exists())
+        self.assertTrue(len(self.context.saved_configs) == 1)
+        config = self.context.saved_configs[0]
+        self.assertEqual(config._config_io._file, self.config_dir / "config.toml")
+        self.assertEqual(config.default_branch, "main")
+        self.assertEqual(config.owner, "octo")
+        self.assertEqual(config.name, "repo")
 
         self.hooks.fire.assert_any_call(
             Hook.pre_init,

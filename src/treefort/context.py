@@ -3,8 +3,13 @@ import shutil
 from contextlib import contextmanager
 from pathlib import Path
 
-from treefort.config import Config, GlobalConfig, RepositoryConfig
-from treefort.errors import AncestorNotFoundError, ConfigTypeError, ProjectNotFoundError
+from treefort.config import (
+    ConfigManager,
+    ConfigProtocol,
+    GlobalConfig,
+    RepositoryConfig,
+)
+from treefort.errors import AncestorNotFoundError, ProjectNotFoundError
 from treefort.utils import find_up
 
 
@@ -51,6 +56,7 @@ class Context:
         self.cwd = Path.cwd()
         self._cached_project_dir: Path | None = None
         self._migrated = False
+        self._config_manager = ConfigManager()
 
     @property
     def project_dir(self) -> Path:
@@ -129,29 +135,13 @@ class Context:
             raise ProjectNotFoundError("Project not found") from e
 
     def get_config(self) -> RepositoryConfig:
-        file_path = self.config_dir / "config.json"
-        if not file_path.exists():
-            return RepositoryConfig()
+        """Get the repository configuration."""
+        return self._config_manager.get_config(self.config_dir)
 
-        with file_path.open("r", encoding="utf-8") as f:
-            return RepositoryConfig.load(f)
+    def get_global_config(self) -> GlobalConfig:
+        """Get the global configuration."""
+        return self._config_manager.get_global_config(self.global_config_dir)
 
-    def get_global_config(self):
-        file_path = self.global_config_dir / "config.json"
-        if not file_path.exists():
-            return GlobalConfig()
-
-        with file_path.open("r", encoding="utf-8") as f:
-            return GlobalConfig.load(f)
-
-    def set_config(self, config: Config):
-        if isinstance(config, RepositoryConfig):
-            config_dir = self.config_dir
-        elif isinstance(config, GlobalConfig):
-            config_dir = self.global_config_dir
-        else:
-            raise ConfigTypeError(f"Unknown config type: {type(config)}")
-
-        config_dir.mkdir(parents=True, exist_ok=True)
-        with (config_dir / "config.json").open("w", encoding="utf-8") as f:
-            config.save(f)
+    def set_config(self, config: ConfigProtocol):
+        """Save a configuration to disk."""
+        self._config_manager.save_config(config)
