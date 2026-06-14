@@ -95,10 +95,9 @@ class Hooks(ConfigOperator, SubprocessOperator):
         checksum = hashlib.sha256(content).hexdigest()
 
         global_config = self.context.get_global_config()
-        allowed_hooks = global_config.allowed_hooks
         hook_file_str = str(hook_file)
 
-        if hook_file_str in allowed_hooks and allowed_hooks[hook_file_str] == checksum:
+        if global_config.allowed_hooks.get(hook_file_str, default="") == checksum:
             return True
 
         self.logger.warning(f"New/modified hook found: {hook_file_str}")
@@ -109,7 +108,7 @@ class Hooks(ConfigOperator, SubprocessOperator):
         response = input("Do you want to allow this hook to run? (y/N): ")
         if response.lower() == "y":
             global_config.allow_hook(hook_file_str, checksum)
-            self.context.set_config(global_config)
+            self.context.set_config(global_config.allowed_hooks)
             return True
 
         return False

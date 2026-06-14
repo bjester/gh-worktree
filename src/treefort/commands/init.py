@@ -2,7 +2,7 @@ import re
 from urllib import parse
 
 from treefort.command import Command
-from treefort.config import RepositoryConfig
+from treefort.config import RepositoryConfig, TomlConfigIO
 from treefort.errors import ProjectExistsError, RepositoryPathError
 from treefort.hooks import Hook, HookExists
 from treefort.templates import TemplateExists
@@ -112,7 +112,7 @@ class InitCommand(Command):
             self._runtime.git.config("remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
             self._runtime.git.fetch()
             repo_data = self._runtime.gh.repo_status()
-            config = RepositoryConfig()
+            config = RepositoryConfig(TomlConfigIO.from_path(self._context.config_dir, "config"))
             config.update(
                 default_branch=repo_data["defaultBranchRef"]["name"],
                 owner=repo_data["owner"]["login"],
@@ -121,9 +121,7 @@ class InitCommand(Command):
                 is_private=repo_data["isPrivate"],
             )
 
-            self._context.config_dir.mkdir(parents=True, exist_ok=True)
-            with (self._context.config_dir / "config.json").open("w", encoding="utf-8") as f:
-                config.save(f)
+            self._context.set_config(config)
 
             self._add_templates(config)
             self._add_hooks(config)
