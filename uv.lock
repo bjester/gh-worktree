@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.10"
 
 [options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
+exclude-newer = "2026-06-07T16:47:07.670916188Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -50,7 +50,7 @@ wheels = [
 
 [[package]]
 name = "gh-worktree"
-version = "0.4.0"
+version = "0.5.0b0"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
