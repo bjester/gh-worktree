@@ -7,6 +7,7 @@ PR_FIELDS = [
     "author",
     "baseRefName",
     "headRefName",
+    "headRefOid",
     "headRepository",
     "headRepositoryOwner",
     "state",
@@ -38,3 +39,27 @@ class GithubCLI(SubprocessOperator):
         with self.run(["repo", "view", "--json", ",".join(REPO_FIELDS)]) as p:
             output = p.stdout
         return json.loads(output)
+
+    def merged_pr_by_head(self, head_ref_name: str, owner_repo: str | None = None) -> list[dict]:
+        """Get merged PR info for a given head ref name"""
+        args = [
+            "pr",
+            "list",
+            "--head",
+            head_ref_name,
+            "--state",
+            "merged",
+            "--json",
+            ",".join(PR_FIELDS),
+        ]
+        if owner_repo:
+            args.extend(["--repo", owner_repo])
+        try:
+            with self.run(args) as p:
+                output = p.stdout
+            prs = json.loads(output)
+            if prs:
+                return prs
+        except Exception:
+            pass
+        return []
