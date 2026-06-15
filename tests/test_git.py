@@ -120,3 +120,16 @@ class GitCLITestCase(TestCase):
         self.mock_stream_exec.assert_called_with(
             ["worktree", "remove", "--force", "--", "old-tree"], cwd=None
         )
+
+    def test_get_branch_head(self):
+        run_patcher = mock.patch("treefort.git.SubprocessOperator.run")
+        mock_run = run_patcher.start()
+        self.addCleanup(run_patcher.stop)
+
+        mock_process = mock.MagicMock()
+        mock_process.stdout = "abc123def456\n"
+        mock_run.return_value.__enter__.return_value = mock_process
+
+        result = self.cli.get_branch_head("feature-branch")
+        mock_run.assert_called_once_with(["rev-parse", "feature-branch"])
+        self.assertEqual(result, "abc123def456")

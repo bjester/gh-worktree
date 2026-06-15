@@ -69,3 +69,27 @@ class GitCLI(SubprocessOperator):
             args.append("--force")
         args.extend(["--", name])
         self.stream_exec(args)
+
+    def list_worktrees(self) -> list[dict]:
+        """List all worktrees and their associated branches"""
+        worktrees = []
+        current_worktree = None
+        for line in self.iter_output(["worktree", "list", "--porcelain"]):
+            if line.startswith("worktree "):
+                current_worktree = {"path": line[9:], "branch": None, "is_bare": False}
+                worktrees.append(current_worktree)
+            elif line.startswith("branch ") and current_worktree:
+                current_worktree["branch"] = line[7:]
+            elif line == "bare" and current_worktree:
+                current_worktree["is_bare"] = True
+        return worktrees
+
+    def delete_branch(self, name: str, force: bool = False):
+        """Delete a local branch"""
+        args = ["branch", "-d" if not force else "-D", "--", name]
+        self.stream_exec(args)
+
+    def get_branch_head(self, branch_name: str) -> str:
+        """Get the HEAD commit SHA of a given branch"""
+        with self.run(["rev-parse", branch_name]) as p:
+            return p.stdout.strip()
