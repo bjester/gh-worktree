@@ -47,13 +47,17 @@ class RemoveCommandTestCase(TestCase):
 
         context = StubContext(project_dir)
         hooks = SimpleNamespace(fire=Mock())
-        git = SimpleNamespace(remove_worktree=Mock())
+        git = SimpleNamespace(
+            remove_worktree=Mock(),
+            delete_branch=Mock(),
+        )
         runtime = SimpleNamespace(context=context, hooks=hooks, git=git)
 
         command = RemoveCommand(runtime)
-        command("feature", force=True)
+        command("feature", force=True, delete_branch=True)
 
         git.remove_worktree.assert_called_once_with("feature", force=True)
+        git.delete_branch.assert_called_once_with("feature", force=True)
         hooks.fire.assert_any_call(Hook.pre_remove, "feature", "feature", bypass_allowlist=False)
         hooks.fire.assert_any_call(Hook.post_remove, "feature", "feature", bypass_allowlist=False)
 

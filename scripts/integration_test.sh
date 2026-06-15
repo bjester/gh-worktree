@@ -146,4 +146,22 @@ if [ -d "for-integration" ]; then
 fi
 echo "PASS: All worktrees removed"
 
+# Test 8: Prune - remove worktrees for merged branches
+echo "[TEST 8] Pruning worktrees..."
+uv run treefort checkout 3
+
+assert_dir_exists "project-rename"
+cd project-rename
+rm -rf AGENTS.md .aiassistant/ .gemini/
+cd ..
+
+uv run treefort prune --yes
+
+if [ -d "project-rename" ]; then
+    echo "FAIL: project-rename/ still exists after prune"
+    exit 1
+fi
+
+echo "PASS: All worktrees pruned"
+
 echo "=== All Integration Tests Passed ==="
