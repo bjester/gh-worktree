@@ -13,7 +13,7 @@ jobs:
       whl-artifact-id: ${{ steps.artifact-whl-upload-step.outputs.artifact-id }}
       pex-artifact-id: ${{ steps.artifact-pex-upload-step.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -54,7 +54,7 @@ jobs:
     outputs:
       exe-artifact-id: ${{ steps.artifact-exe-upload-step.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -83,7 +83,7 @@ jobs:
     outputs:
       exe-artifact-id: ${{ steps.artifact-exe-upload-step.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
