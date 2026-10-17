@@ -20,14 +20,21 @@ This style guide outlines the coding conventions for the project `treefort`. The
 ## Imports
 * **Multiple imports per line:** Do not import multiple modules on a single line (e.g., use separate import statements).
 * **Absolute imports:** Always use absolute imports for clarity.
+* **Import sorting:** Follow standard grouping (standard library, third-party, first-party) managed by Ruff.
 
 ## Naming Conventions
-
 * **Variables:** Use lowercase with underscores (snake_case): `user_name`, `total_count`
 * **Constants:**  Use uppercase with underscores: `MAX_VALUE`, `DATABASE_NAME`
 * **Functions:** Use lowercase with underscores (snake_case): `calculate_total()`, `process_data()`
 * **Classes:** Use CapWords (CamelCase): `UserManager`, `PaymentProcessor`
 * **Modules:** Use lowercase with underscores (snake_case): `user_utils`, `payment_gateway`
+
+## Path Handling
+* **Use `pathlib.Path`:** Prefer `pathlib.Path` over `os.path` for all filesystem path operations (enforced by Ruff `PTH`).
+
+## Subprocess & CLI Safety
+* **Argument separator:** Always pass the `--` argument separator before user-controlled inputs or branch names in Git CLI commands (e.g. `git branch -d -- <branch>`) to prevent option injection.
+* **Subprocess errors:** Convert nonzero CLI subprocess results into `CommandError` with captured diagnostic output rather than swallowing errors or returning empty results.
 
 ## Docstrings
 * **Use triple double quotes (`"""Docstring goes here."""`) for all docstrings.**
@@ -54,7 +61,8 @@ This style guide outlines the coding conventions for the project `treefort`. The
 
 ## Type Hints
 * **Use type hints:** Type hints improve code readability and help catch errors early.
-* **Follow PEP 484:** Use the standard type hinting syntax.
+* **Modern syntax (Python >=3.10):** Use modern union syntax (`type | None` instead of `Optional[type]`) and built-in generics (`list[str]`, `dict[str, Any]` instead of `typing.List`, `typing.Dict`).
+* **Follow PEP 484:** Use standard type annotations across all function signatures.
 
 ## Comments
 * **Write clear and concise comments:** Explain the "why" behind the code, not just the "what".
