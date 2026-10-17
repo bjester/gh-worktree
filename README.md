@@ -24,6 +24,7 @@ A CLI tool that helps you manage Git worktrees. Built as a GitHub CLI (`gh`) ext
   - [create](#commands-create)
   - [checkout](#commands-checkout)
   - [remove](#commands-remove)
+  - [prune](#commands-prune)
   - [install](#commands-install)
   - [version](#commands-version)
 - [Installation](#installation)
@@ -77,7 +78,7 @@ treefort/
   .treefort/
     hooks/             # Project-level hooks
     templates/         # Project-level templates
-    config.json        # Project configuration
+    config.toml        # Project configuration
   my-new-worktree/       # Created worktrees
     README.md
     ...
@@ -103,6 +104,7 @@ Execution order: global hooks first, then project hooks.
 | `post_remove` | Global + Project | After removing a worktree |
 
 Hooks must be executable and allowed (via checksum validation) to run.
+Treefort stores approved hook checksums in `~/.treefort/allowed_hooks.json`.
 
 <details>
 <summary><strong>Example: post_create hook</strong></summary>
@@ -133,7 +135,8 @@ Files in `.treefort/templates/` are copied to new worktrees before post-hooks ex
 
 **Tip:** Add template files to `.gitignore`.
 
-Templates support environment variable substitution using `${ENVVAR_NAME}` syntax. Allowlist variable names in `~/.treefort/config.json` under `allowed_envvars`.
+Templates support environment variable substitution with `${ENVVAR_NAME}` syntax. Add allowed
+variable names to `allowed_envvars` in `~/.treefort/config.toml`.
 
 **Provided variables:**
 
@@ -202,13 +205,27 @@ Quickly create a worktree for a PR or existing branch. Works with fork PRs regar
 <details>
 <summary><strong><a id="commands-remove">remove</a></strong> — Remove a worktree</summary>
 
-**Spec:** `remove [--force] [--yes] <worktree_name>`
+**Spec:** `remove [--force] [--yes] [--delete-branch] <worktree_name>`
 
 **Aliases:** `rm`
 
 Removes a worktree. Git refuses to delete worktrees with unmerged commits unless `--force` is used.
 
+- `--delete-branch`: Delete the local Git branch associated with the worktree
 - `--yes`: Automatically execute new or modified hooks without prompting
+
+</details>
+
+<details>
+<summary><strong><a id="commands-prune">prune</a></strong> — Remove worktrees for merged pull requests</summary>
+
+**Spec:** `prune [--force] [--yes]`
+
+Finds worktrees whose local branch head matches a merged GitHub pull request. Unless you use
+`--yes`, treefort prompts before it removes each worktree and local branch.
+
+- `--force`: Bypass Git safety checks when treefort removes the worktree
+- `--yes`: Skip removal prompts and execute new or modified hooks without prompting
 
 </details>
 
