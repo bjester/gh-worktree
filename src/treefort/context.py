@@ -95,12 +95,15 @@ class Context:
             self.cwd = old_cwd
 
     def migrate(self):
-        skip_project_config = False
+        if self._migrated:
+            return
+
+        project_found = True
         try:
             parent_dir = self.project_dir.parent
         except AncestorNotFoundError:
             parent_dir = self.cwd.parent
-            skip_project_config = True
+            project_found = False
 
         # migrate global config
         try:
@@ -116,17 +119,17 @@ class Context:
         if old_global_config_dir.exists():
             migrate_old_config(old_global_config_dir, new_global_config_dir)
 
-        if skip_project_config:
-            return
+        if project_found:
+            # migrate project config
+            try:
+                old_config_dir = self.project_dir / ".gh" / "worktree"
+                new_config_dir = self.project_dir / ".treefort"
+                if old_config_dir.exists():
+                    migrate_old_config(old_config_dir, new_config_dir)
+            except AncestorNotFoundError:
+                pass
 
-        # migrate project config
-        try:
-            old_config_dir = self.project_dir / ".gh" / "worktree"
-            new_config_dir = self.project_dir / ".treefort"
-            if old_config_dir.exists():
-                migrate_old_config(old_config_dir, new_config_dir)
-        except AncestorNotFoundError:
-            pass
+        self._migrated = True
 
     def reset_properties(self):
         """Resets any cached properties"""
