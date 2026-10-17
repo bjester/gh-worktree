@@ -67,6 +67,9 @@ class PruneCommand(Command):
         """
         project_dir = self._context.project_dir
         config = self._context.get_config()
+        # A partial configuration cannot produce a usable repository identifier, so let gh infer
+        # it from the current checkout instead of passing an identifier built from missing values.
+        owner_repo = f"{config.owner}/{config.name}" if config.owner and config.name else None
 
         worktrees = self._runtime.git.list_worktrees()
 
@@ -81,9 +84,7 @@ class PruneCommand(Command):
             branch_name = branch_ref.removeprefix("refs/heads/")
             worktree_name = Path(wt["path"]).resolve().relative_to(project_dir.resolve()).as_posix()
 
-            pr_infos = self._runtime.gh.merged_pr_by_head(
-                branch_name, owner_repo=f"{config.owner}/{config.name}"
-            )
+            pr_infos = self._runtime.gh.merged_pr_by_head(branch_name, owner_repo=owner_repo)
 
             if not pr_infos:
                 continue

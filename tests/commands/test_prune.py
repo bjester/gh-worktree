@@ -70,6 +70,41 @@ class PruneCommandTestCase(TestCase):
         self.assertTrue(self.context.assert_called)
         self.logger.info.assert_any_call("No merged PR worktrees found to prune.")
 
+    def _one_eligible_worktree(self):
+        worktree_path = self.project_dir / "feature-branch"
+        worktree_path.mkdir()
+        self.git.list_worktrees.return_value = [
+            {"path": str(worktree_path), "branch": "refs/heads/feature-branch", "is_bare": False},
+        ]
+        self.gh.merged_pr_by_head.return_value = []
+
+    def _assert_repo_arg_omitted(self):
+        self.gh.merged_pr_by_head.assert_called_once_with("feature-branch", owner_repo=None)
+        self.assertNotIn("None/None", str(self.gh.merged_pr_by_head.call_args_list))
+
+    def test_call__uses_configured_owner_repo(self):
+        self._one_eligible_worktree()
+
+        self.command()
+
+        self.gh.merged_pr_by_head.assert_called_once_with("feature-branch", owner_repo="octo/repo")
+
+    def test_call__omits_repo_when_owner_missing(self):
+        self.config.owner = None
+        self._one_eligible_worktree()
+
+        self.command()
+
+        self._assert_repo_arg_omitted()
+
+    def test_call__omits_repo_when_name_missing(self):
+        self.config.name = None
+        self._one_eligible_worktree()
+
+        self.command()
+
+        self._assert_repo_arg_omitted()
+
     def test_call__prunes_merged_worktree(self):
         wt_path = str(self.project_dir / "feature-branch")
         (self.project_dir / "feature-branch").mkdir()
