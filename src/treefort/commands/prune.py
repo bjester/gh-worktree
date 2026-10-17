@@ -1,9 +1,19 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 from treefort.command import Command
 from treefort.errors import CommandError
 from treefort.hooks import Hook
 from treefort.utils import normalize_worktree_name
+
+
+@dataclass(frozen=True)
+class PruneCandidate:
+    """A worktree branch whose head matches a merged pull request."""
+
+    worktree_name: str
+    branch_name: str
+    expected_head: str
 
 
 class PruneCommand(Command):
@@ -23,8 +33,7 @@ class PruneCommand(Command):
             treefort prune --yes
             treefort prune --force --yes
 
-        :param force: Whether to force the removal of the worktree and branch,
-            bypassing git safety checks
+        :param force: Whether to bypass git safety checks when removing the worktree
         :param yes: Perform any action automatically without asking (execute new or modified hooks)
         """
         self._context.assert_within_project()
@@ -32,16 +41,17 @@ class PruneCommand(Command):
         pruned_count = 0
         failed_count = 0
 
-        for worktree_name, branch_name in self._iter_worktrees():
+        for candidate in self._iter_worktrees():
             if not yes:
                 response = input(
-                    f"Remove worktree '{worktree_name}' and branch '{branch_name}'? (y/N): "
+                    f"Remove worktree '{candidate.worktree_name}' and branch "
+                    f"'{candidate.branch_name}'? (y/N): "
                 )
                 if response.lower() != "y":
-                    self._logger.info(f"Skipping '{worktree_name}'")
+                    self._logger.info(f"Skipping '{candidate.worktree_name}'")
                     continue
 
-            if self._do_prune(worktree_name, branch_name, force, yes):
+            if self._do_prune(candidate, force, yes):
                 pruned_count += 1
             else:
                 failed_count += 1
@@ -100,33 +110,42 @@ class PruneCommand(Command):
             self._logger.info(f"  PR #{pr_info['number']}: {pr_info['title']}")
             self._logger.info(f"  URL: {pr_info['url']}")
 
-            yield worktree_name, branch_name
+            yield PruneCandidate(worktree_name, branch_name, local_head)
 
-    def _do_prune(self, worktree_name: str, branch_name: str, force: bool, yes: bool):
+    def _do_prune(self, candidate: PruneCandidate, force: bool, yes: bool) -> bool:
         """
         Executes the prune operation, firing the hooks before and after.
+
+        The local branch is deleted only if it still matches the head verified against a merged
+        PR by :meth:`_iter_worktrees`. ``force`` only applies to worktree removal, where git
+        safety checks remain meaningful.
         """
         project_dir = self._context.project_dir
 
         try:
-            normalized_name = normalize_worktree_name(worktree_name)
+            normalized_name = normalize_worktree_name(candidate.worktree_name)
             with self._context.use(project_dir):
                 self._runtime.hooks.fire(
-                    Hook.pre_remove, worktree_name, normalized_name, bypass_allowlist=yes
+                    Hook.pre_remove,
+                    candidate.worktree_name,
+                    normalized_name,
+                    bypass_allowlist=yes,
                 )
 
-                self._runtime.git.remove_worktree(worktree_name, force=force)
-                try:
-                    self._runtime.git.delete_branch(branch_name, force=force)
-                except CommandError as e:
-                    self._logger.warning(f"Failed to delete branch '{branch_name}': {e}")
+                self._runtime.git.remove_worktree(candidate.worktree_name, force=force)
+                self._runtime.git.delete_branch_if_head(
+                    candidate.branch_name, candidate.expected_head
+                )
 
                 self._runtime.hooks.fire(
-                    Hook.post_remove, worktree_name, normalized_name, bypass_allowlist=yes
+                    Hook.post_remove,
+                    candidate.worktree_name,
+                    normalized_name,
+                    bypass_allowlist=yes,
                 )
 
-            self._logger.info(f"Successfully pruned '{worktree_name}'")
+            self._logger.info(f"Successfully pruned '{candidate.worktree_name}'")
             return True
         except CommandError as e:
-            self._logger.error(f"Failed to prune '{worktree_name}': {e}")
+            self._logger.error(f"Failed to prune '{candidate.worktree_name}': {e}")
             return False

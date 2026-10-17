@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from treefort.commands.prune import PruneCommand
+from treefort.commands.prune import PruneCandidate, PruneCommand
 from treefort.errors import CommandError
 from treefort.hooks import Hook
 
@@ -42,7 +42,7 @@ class PruneCommandTestCase(TestCase):
             list_worktrees=Mock(),
             get_branch_head=Mock(),
             remove_worktree=Mock(),
-            delete_branch=Mock(),
+            delete_branch_if_head=Mock(),
         )
         self.gh = SimpleNamespace(merged_pr_by_head=Mock())
         self.logger = Mock()
@@ -91,7 +91,7 @@ class PruneCommandTestCase(TestCase):
             self.command()
 
         self.git.remove_worktree.assert_called_once_with("feature-branch", force=False)
-        self.git.delete_branch.assert_called_once_with("feature-branch", force=False)
+        self.git.delete_branch_if_head.assert_called_once_with("feature-branch", "abc123def456")
         self.hooks.fire.assert_any_call(
             Hook.pre_remove, "feature-branch", "feature-branch", bypass_allowlist=False
         )
@@ -174,7 +174,7 @@ class PruneCommandTestCase(TestCase):
             self.command(force=True)
 
         self.git.remove_worktree.assert_called_once_with("force-branch", force=True)
-        self.git.delete_branch.assert_called_once_with("force-branch", force=True)
+        self.git.delete_branch_if_head.assert_called_once_with("force-branch", "match123")
 
     def test_call__handles_prune_failure_gracefully(self):
         wt_path = str(self.project_dir / "fail-branch")
@@ -198,3 +198,48 @@ class PruneCommandTestCase(TestCase):
         self.logger.error.assert_called()
         self.logger.info.assert_any_call("Successfully pruned 'success-branch'")
         self.logger.info.assert_any_call("Pruning complete: 1 pruned, 1 failed.")
+
+    def test_do_prune__returns_false_when_branch_deletion_fails(self):
+        self.git.delete_branch_if_head.side_effect = CommandError("branch deletion failed")
+
+        result = self.command._do_prune(
+            PruneCandidate("fail-branch", "fail-branch", "verified-head"),
+            force=False,
+            yes=True,
+        )
+
+        self.assertFalse(result)
+        self.hooks.fire.assert_any_call(
+            Hook.pre_remove, "fail-branch", "fail-branch", bypass_allowlist=True
+        )
+        self.assertNotIn(
+            Hook.post_remove, [call.args[0] for call in self.hooks.fire.call_args_list]
+        )
+        self.logger.error.assert_called_once_with(
+            "Failed to prune 'fail-branch': branch deletion failed"
+        )
+        self.assertNotIn(
+            "Successfully pruned 'fail-branch'",
+            [call.args[0] for call in self.logger.info.call_args_list],
+        )
+
+    def test_call__counts_branch_deletion_failure(self):
+        wt_path = str(self.project_dir / "fail-branch")
+        (self.project_dir / "fail-branch").mkdir()
+
+        self.git.list_worktrees.return_value = [
+            {"path": wt_path, "branch": "refs/heads/fail-branch", "is_bare": False},
+        ]
+        self.git.get_branch_head.return_value = "match123"
+        self.gh.merged_pr_by_head.return_value = [
+            {"number": 1, "title": "Fail", "url": "url", "headRefOid": "match123"}
+        ]
+        self.git.delete_branch_if_head.side_effect = CommandError("branch deletion failed")
+
+        self.command(yes=True)
+
+        self.logger.info.assert_any_call("Pruning complete: 0 pruned, 1 failed.")
+        self.assertNotIn(
+            "Successfully pruned 'fail-branch'",
+            [call.args[0] for call in self.logger.info.call_args_list],
+        )
