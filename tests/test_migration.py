@@ -185,3 +185,36 @@ class ContextMigrationTestCase(TestCase):
         # Should return new location without migration
         expected = home_dir / ".treefort"
         self.assertEqual(result, expected)
+        self.assertFalse(expected.exists())
+
+    @patch("treefort.context.find_up")
+    @patch("treefort.context.Path.home")
+    def test_migrate__uses_home_fallback_when_no_ancestor_gh(self, mock_home, mock_find_up):
+        """Should migrate ~/.gh/worktree to ~/.treefort when no .gh ancestor is found"""
+        # Setup mock home directory containing a legacy global configuration
+        home_dir = self.tmp_path / "home"
+        old_config_dir = home_dir / ".gh" / "worktree"
+        old_config_dir.mkdir(parents=True)
+        (old_config_dir / "config.json").write_text('{"type": "global", "test": "value"}')
+        mock_home.return_value = home_dir
+
+        # Mock find_up to raise AncestorNotFoundError, representing running outside
+        # the home directory tree so neither project nor .gh ancestors are found
+        from treefort.errors import AncestorNotFoundError
+
+        mock_find_up.side_effect = AncestorNotFoundError("Not found")
+
+        # run
+        self.context.migrate()
+
+        # Verify migration occurred from the home fallback location
+        new_config_dir = home_dir / ".treefort"
+        self.assertTrue(new_config_dir.exists())
+        self.assertTrue((new_config_dir / "config.json").exists())
+        self.assertEqual(
+            (new_config_dir / "config.json").read_text(),
+            '{"type": "global", "test": "value"}',
+        )
+        # Legacy directories should be removed
+        self.assertFalse(old_config_dir.exists())
+        self.assertFalse((home_dir / ".gh").exists())
