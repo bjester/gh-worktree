@@ -343,7 +343,8 @@ class ConfigManager:
             self._config = config
         elif isinstance(config, GlobalConfig):
             self._global_config = config
-        elif isinstance(config, AllowedHooksConfig) and self._global_config is not None:
-            self._global_config.allowed_hooks = config
+        elif isinstance(config, AllowedHooksConfig):
+            if self._global_config is not None:
+                self._global_config.allowed_hooks = config
         else:
             raise ValueError(f"Unknown config type: {type(config)}")
