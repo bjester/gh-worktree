@@ -1,7 +1,7 @@
 import logging
 from unittest import TestCase
 
-from gh_worktree.logger import ColorFormatter
+from treefort.logger import ColorFormatter
 
 
 class ColorFormatterTestCase(TestCase):
@@ -9,10 +9,10 @@ class ColorFormatterTestCase(TestCase):
         formatter = ColorFormatter(
             "%(message)s",
             use_color=False,
-            base_logger_name="gh_worktree",
+            base_logger_name="treefort",
         )
         record = logging.LogRecord(
-            name="gh_worktree.gh",
+            name="treefort.gh",
             level=logging.INFO,
             pathname=__file__,
             lineno=1,
@@ -27,7 +27,7 @@ class ColorFormatterTestCase(TestCase):
         formatter = ColorFormatter(
             "%(message)s",
             use_color=False,
-            base_logger_name="gh_worktree",
+            base_logger_name="treefort",
         )
         record = logging.LogRecord(
             name="urllib3.connectionpool",

@@ -4,9 +4,9 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import Mock
 
-from gh_worktree.commands.create import CreateCommand
-from gh_worktree.git import GitRemote
-from gh_worktree.hooks import Hook
+from treefort.commands.create import CreateCommand
+from treefort.git import GitRemote
+from treefort.hooks import Hook
 
 
 class StubContext:

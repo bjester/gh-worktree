@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/gh-worktree
+      url: https://pypi.org/p/treefort
     permissions:
       id-token: write
       contents: write
@@ -28,7 +28,7 @@ jobs:
       - name: Build wheel and PEX
         run: |
           make clean
-          make build-whl dist/gh-worktree.pex
+          make build-whl dist/treefort.pex
 
       - name: Upload PEX to GitHub Release
         env:
@@ -51,10 +51,10 @@ jobs:
         include:
           - arch: amd64
             runner: ubuntu-latest
-            binary_name: gh-worktree-linux-amd64
+            binary_name: treefort-linux-amd64
           - arch: arm64
             runner: ubuntu-24.04-arm
-            binary_name: gh-worktree-linux-arm64
+            binary_name: treefort-linux-arm64
     permissions:
       contents: write
     steps:
@@ -72,8 +72,8 @@ jobs:
       - name: Build binary
         run: |
           make clean
-          make dist/gh-worktree
-          mv dist/gh-worktree dist/${{ matrix.binary_name }}
+          make dist/treefort
+          mv dist/treefort dist/${{ matrix.binary_name }}
 
       - name: Upload binary to GitHub Release
         env:

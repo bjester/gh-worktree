@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from gh_worktree.templates import TemplateExists, Templates
+from treefort.templates import TemplateExists, Templates
 
 
 class StubContext:

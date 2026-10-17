@@ -1,10 +1,12 @@
+import subprocess
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, mock
 
-from gh_worktree.errors import CommandError, WorktreeNameError
-from gh_worktree.git import GitCLI, GitRemote
-from gh_worktree.logger import setup_logger
+from treefort.errors import CommandError, WorktreeNameError
+from treefort.git import GitCLI, GitRemote
+from treefort.logger import setup_logger
 
 
 class GitCLITestCase(TestCase):
@@ -13,12 +15,12 @@ class GitCLITestCase(TestCase):
         self.logger = setup_logger("test")
         self.cli = GitCLI(self.context, self.logger)
 
-        stream_exec_patcher = mock.patch("gh_worktree.git.SubprocessOperator.stream_exec")
+        stream_exec_patcher = mock.patch("treefort.git.SubprocessOperator.stream_exec")
         self.mock_stream_exec = stream_exec_patcher.start()
         self.addCleanup(stream_exec_patcher.stop)
         self.mock_stream_exec.return_value = 0
 
-        iter_output_patcher = mock.patch("gh_worktree.git.SubprocessOperator.iter_output")
+        iter_output_patcher = mock.patch("treefort.git.SubprocessOperator.iter_output")
         self.mock_iter_output = iter_output_patcher.start()
         self.addCleanup(iter_output_patcher.stop)
 
@@ -120,3 +122,129 @@ class GitCLITestCase(TestCase):
         self.mock_stream_exec.assert_called_with(
             ["worktree", "remove", "--force", "--", "old-tree"], cwd=None
         )
+
+    def test_list_worktrees(self):
+        self.mock_iter_output.return_value = [
+            "worktree /repo",
+            "HEAD 0123456789abcdef0123456789abcdef01234567",
+            "branch refs/heads/main",
+            "",
+            "worktree /repo/.git/worktrees/feature",
+            "HEAD 89abcdef0123456789abcdef0123456789abcdef",
+            "branch refs/heads/feature/existing-branch",
+            "",
+            "worktree /repo/.git/worktrees/detached",
+            "HEAD fedcba9876543210fedcba9876543210fedcba98",
+            "detached HEAD",
+            "",
+            "worktree /bare-clone",
+            "HEAD 000102030405060708090a0b0c0d0e0f10111213",
+            "bare",
+            "",
+        ]
+
+        worktrees = self.cli.list_worktrees()
+
+        self.mock_iter_output.assert_called_once_with(["worktree", "list", "--porcelain"])
+        self.assertEqual(
+            worktrees,
+            [
+                {"path": "/repo", "branch": "refs/heads/main", "is_bare": False},
+                {
+                    "path": "/repo/.git/worktrees/feature",
+                    "branch": "refs/heads/feature/existing-branch",
+                    "is_bare": False,
+                },
+                {"path": "/repo/.git/worktrees/detached", "branch": None, "is_bare": False},
+                {"path": "/bare-clone", "branch": None, "is_bare": True},
+            ],
+        )
+
+    def test_delete_branch(self):
+        self.cli.delete_branch("feature-branch")
+        self.mock_stream_exec.assert_called_once_with(
+            ["branch", "-d", "--", "feature-branch"], cwd=None
+        )
+
+    def test_delete_branch__force(self):
+        self.cli.delete_branch("feature-branch", force=True)
+        self.mock_stream_exec.assert_called_once_with(
+            ["branch", "-D", "--", "feature-branch"], cwd=None
+        )
+
+    def test_get_branch_head(self):
+        run_patcher = mock.patch("treefort.git.SubprocessOperator.run")
+        mock_run = run_patcher.start()
+        self.addCleanup(run_patcher.stop)
+
+        mock_process = mock.MagicMock()
+        mock_process.stdout = "abc123def456\n"
+        mock_run.return_value.__enter__.return_value = mock_process
+
+        result = self.cli.get_branch_head("feature-branch")
+        mock_run.assert_called_once_with(["rev-parse", "feature-branch"])
+        self.assertEqual(result, "abc123def456")
+
+
+class GitCLIDeleteBranchIfHeadTestCase(TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.repo_dir = Path(self.tmp_dir.name) / "repo"
+        self.repo_dir.mkdir()
+        self.run_git("init", "--quiet")
+        self.run_git("config", "user.name", "Treefort Test")
+        self.run_git("config", "user.email", "treefort@example.invalid")
+        self.run_git("commit", "--allow-empty", "--quiet", "-m", "initial")
+        self.run_git("branch", "feature")
+
+        context = SimpleNamespace(cwd=self.repo_dir)
+        self.cli = GitCLI(context, setup_logger("test"))
+
+    def tearDown(self):
+        self.tmp_dir.cleanup()
+
+    def run_git(self, *args: str) -> str:
+        process = subprocess.run(
+            ["git", *args],
+            cwd=self.repo_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return process.stdout.strip()
+
+    def git_succeeds(self, *args: str) -> bool:
+        process = subprocess.run(
+            ["git", *args],
+            cwd=self.repo_dir,
+            capture_output=True,
+            text=True,
+        )
+        return process.returncode == 0
+
+    def test_delete_branch_if_head__retains_branch_when_head_changed(self):
+        verified_head = self.run_git("rev-parse", "feature")
+        self.run_git("commit", "--allow-empty", "--quiet", "-m", "advanced")
+        advanced_head = self.run_git("rev-parse", "HEAD")
+        self.run_git("branch", "--force", "feature", advanced_head)
+
+        with self.assertRaises(CommandError):
+            self.cli.delete_branch_if_head("feature", verified_head)
+
+        self.assertEqual(self.run_git("rev-parse", "feature"), advanced_head)
+
+    def test_delete_branch_if_head__removes_matching_branch_and_branch_config(self):
+        expected_head = self.run_git("rev-parse", "feature")
+        self.run_git("config", "branch.feature.remote", "origin")
+
+        self.cli.delete_branch_if_head("feature", expected_head)
+
+        self.assertFalse(self.git_succeeds("show-ref", "--verify", "refs/heads/feature"))
+        self.assertFalse(self.git_succeeds("config", "--get", "branch.feature.remote"))
+
+        self.run_git("branch", "without-config")
+        expected_head = self.run_git("rev-parse", "without-config")
+
+        self.cli.delete_branch_if_head("without-config", expected_head)
+
+        self.assertFalse(self.git_succeeds("show-ref", "--verify", "refs/heads/without-config"))

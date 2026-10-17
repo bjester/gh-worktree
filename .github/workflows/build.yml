@@ -27,7 +27,7 @@ jobs:
       - name: Build wheel and pex
         run: |
           make clean
-          make build-whl dist/gh-worktree.pex
+          make build-whl dist/treefort.pex
 
       - name: Read the python asset list
         id: asset-list
@@ -46,8 +46,8 @@ jobs:
         id: artifact-pex-upload-step
         if: github.event_name == 'pull_request'
         with:
-          name: gh-worktree.pex
-          path: dist/gh-worktree.pex
+          name: treefort.pex
+          path: dist/treefort.pex
 
   build_binary_amd64:
     runs-on: ubuntu-latest
@@ -68,15 +68,15 @@ jobs:
       - name: Build binary
         run: |
           make clean
-          make dist/gh-worktree
-          mv dist/gh-worktree dist/gh-worktree-linux-amd64
+          make dist/treefort
+          mv dist/treefort dist/treefort-linux-amd64
 
       - uses: actions/upload-artifact@v7
         id: artifact-exe-upload-step
         if: github.event_name == 'pull_request'
         with:
-          name: gh-worktree-linux-amd64
-          path: dist/gh-worktree-linux-amd64
+          name: treefort-linux-amd64
+          path: dist/treefort-linux-amd64
 
   build_binary_arm64:
     runs-on: ubuntu-24.04-arm
@@ -97,15 +97,15 @@ jobs:
       - name: Build binary
         run: |
           make clean
-          make dist/gh-worktree
-          mv dist/gh-worktree dist/gh-worktree-linux-arm64
+          make dist/treefort
+          mv dist/treefort dist/treefort-linux-arm64
 
       - uses: actions/upload-artifact@v7
         id: artifact-exe-upload-step
         if: github.event_name == 'pull_request'
         with:
-          name: gh-worktree-linux-arm64
-          path: dist/gh-worktree-linux-arm64
+          name: treefort-linux-arm64
+          path: dist/treefort-linux-arm64
 
   comment-pr:
     runs-on: ubuntu-latest
@@ -129,9 +129,9 @@ jobs:
           set -eo pipefail
           WHL_NAME="$(find ./ -name '*whl' -type f | head -1 | xargs basename)"
           WHL_CHECKSUM="$(find ./ -name '*whl' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
-          PEX_CHECKSUM="$(find ./ -name 'gh-worktree.pex' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
-          EXE_AMD64_CHECKSUM="$(find ./ -name 'gh-worktree-linux-amd64' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
-          EXE_ARM64_CHECKSUM="$(find ./ -name 'gh-worktree-linux-arm64' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
+          PEX_CHECKSUM="$(find ./ -name 'treefort.pex' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
+          EXE_AMD64_CHECKSUM="$(find ./ -name 'treefort-linux-amd64' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
+          EXE_ARM64_CHECKSUM="$(find ./ -name 'treefort-linux-arm64' -type f | head -1 | xargs sha256sum | cut -d ' ' -f 1)"
           {
             echo "WHL_NAME=${WHL_NAME}"
             echo "WHL_CHECKSUM=${WHL_CHECKSUM}"
@@ -149,7 +149,7 @@ jobs:
             | Type | File | Checksum |
             | --- | --- | --- |
             | Wheel | [${{ env.WHL_NAME }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_python.outputs.whl-artifact-id }}) | `${{ env.WHL_CHECKSUM }}` |
-            | PEX | [gh-worktree.pex](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_python.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
-            | Binary (amd64) | [gh-worktree-linux-amd64](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_binary_amd64.outputs.exe-artifact-id }}) | `${{ env.EXE_AMD64_CHECKSUM }}` |
-            | Binary (arm64) | [gh-worktree-linux-arm64](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_binary_arm64.outputs.exe-artifact-id }}) | `${{ env.EXE_ARM64_CHECKSUM }}` |
+            | PEX | [treefort.pex](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_python.outputs.pex-artifact-id }}) | `${{ env.PEX_CHECKSUM }}` |
+            | Binary (amd64) | [treefort-linux-amd64](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_binary_amd64.outputs.exe-artifact-id }}) | `${{ env.EXE_AMD64_CHECKSUM }}` |
+            | Binary (arm64) | [treefort-linux-arm64](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ needs.build_binary_arm64.outputs.exe-artifact-id }}) | `${{ env.EXE_ARM64_CHECKSUM }}` |
           comment-tag: build-assets

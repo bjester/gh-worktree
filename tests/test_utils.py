@@ -2,8 +2,8 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from gh_worktree.errors import AncestorNotFoundError
-from gh_worktree.utils import find_up, normalize_worktree_name
+from treefort.errors import AncestorNotFoundError
+from treefort.utils import find_up, normalize_worktree_name
 
 
 class FindUpTestCase(TestCase):

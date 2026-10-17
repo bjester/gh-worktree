@@ -1,8 +1,8 @@
-# gh-worktree
+# treefort
 
-[![Python tests](https://github.com/bjester/gh-worktree/actions/workflows/pytest.yml/badge.svg?branch=main)](https://github.com/bjester/gh-worktree/actions/workflows/pytest.yml)
-[![Build](https://github.com/bjester/gh-worktree/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/bjester/gh-worktree/actions/workflows/build.yml)
-[![PyPI](https://img.shields.io/pypi/v/gh-worktree.svg?color=blue)](https://pypi.org/project/gh-worktree/)
+[![Python tests](https://github.com/bjester/treefort/actions/workflows/pytest.yml/badge.svg?branch=main)](https://github.com/bjester/treefort/actions/workflows/pytest.yml)
+[![Build](https://github.com/bjester/treefort/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/bjester/treefort/actions/workflows/build.yml)
+[![PyPI](https://img.shields.io/pypi/v/treefort.svg?color=blue)](https://pypi.org/project/treefort/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org)
 
 A CLI tool that helps you manage Git worktrees. Built as a GitHub CLI (`gh`) extension, but works standalone.
@@ -24,6 +24,7 @@ A CLI tool that helps you manage Git worktrees. Built as a GitHub CLI (`gh`) ext
   - [create](#commands-create)
   - [checkout](#commands-checkout)
   - [remove](#commands-remove)
+  - [prune](#commands-prune)
   - [install](#commands-install)
   - [version](#commands-version)
 - [Installation](#installation)
@@ -35,18 +36,18 @@ A CLI tool that helps you manage Git worktrees. Built as a GitHub CLI (`gh`) ext
 ## Quick Start
 
 ```bash
-pip install gh-worktree
+pip install treefort
 ```
 
 Or with uv:
 
 ```bash
-uvx gh-worktree
+uvx treefort
 ```
 
-Or download the PEX file from the [releases page](https://github.com/bjester/gh-worktree/releases).
+Or download the PEX file from the [releases page](https://github.com/bjester/treefort/releases).
 
-See [recipes](https://github.com/bjester/gh-worktree-recipes) for hooks and templates.
+See [recipes](https://github.com/bjester/treefort-recipes) for hooks and templates.
 
 ---
 
@@ -68,17 +69,16 @@ See [recipes](https://github.com/bjester/gh-worktree-recipes) for hooks and temp
 
 ### Directory Structure
 
-After initializing a repository (e.g., `gh-worktree`):
+After initializing a repository (e.g., `treefort`):
 
 ```
-gh-worktree/
+treefort/
   .bare/                 # Bare git repository
   .git                   # Points to .bare/
-  .gh/
-    worktree/
-      hooks/             # Project-level hooks
-      templates/         # Project-level templates
-      config.json        # Project configuration
+  .treefort/
+    hooks/             # Project-level hooks
+    templates/         # Project-level templates
+    config.toml        # Project configuration
   my-new-worktree/       # Created worktrees
     README.md
     ...
@@ -87,8 +87,8 @@ gh-worktree/
 ### Hooks
 
 Hooks are executable scripts that run at specific lifecycle points. They can be configured at:
-- **Global level**: `~/.gh/worktree/hooks/` (or parent directories outside the project)
-- **Project level**: `.gh/worktree/hooks/` (copied from repo on init if present)
+- **Global level**: `~/.treefort/hooks/` (or parent directories outside the project)
+- **Project level**: `.treefort/hooks/` (copied from repo on init if present)
 
 Execution order: global hooks first, then project hooks.
 
@@ -104,6 +104,7 @@ Execution order: global hooks first, then project hooks.
 | `post_remove` | Global + Project | After removing a worktree |
 
 Hooks must be executable and allowed (via checksum validation) to run.
+Treefort stores approved hook checksums in `~/.treefort/allowed_hooks.json`.
 
 <details>
 <summary><strong>Example: post_create hook</strong></summary>
@@ -130,11 +131,12 @@ popd
 
 ### Templates
 
-Files in `.gh/worktree/templates/` are copied to new worktrees before post-hooks execute.
+Files in `.treefort/templates/` are copied to new worktrees before post-hooks execute.
 
 **Tip:** Add template files to `.gitignore`.
 
-Templates support environment variable substitution using `${ENVVAR_NAME}` syntax. Allowlist variable names in `~/.gh/worktree/config.json` under `allowed_envvars`.
+Templates support environment variable substitution with `${ENVVAR_NAME}` syntax. Add allowed
+variable names to `allowed_envvars` in `~/.treefort/config.toml`.
 
 **Provided variables:**
 
@@ -151,13 +153,13 @@ Templates support environment variable substitution using `${ENVVAR_NAME}` synta
 
 Set a unique project name per worktree in JetBrains IDEs:
 
-**File:** `.gh/worktree/templates/.idea/.name`
+**File:** `.treefort/templates/.idea/.name`
 
 ```
 ${REPO_NAME}.${WORKTREE_NAME_NORMALIZED}
 ```
 
-**Result in worktree:** `.idea/.name` contains `gh-worktree.feat-my-branch`
+**Result in worktree:** `.idea/.name` contains `treefort.feat-my-branch`
 
 </details>
 
@@ -165,7 +167,7 @@ ${REPO_NAME}.${WORKTREE_NAME_NORMALIZED}
 
 ## Commands
 
-Run `gh-worktree` without any arguments for usage information.
+Run `treefort` without any arguments for usage information.
 
 <details>
 <summary><strong><a id="commands-init">init</a></strong> — Initialize a repository for worktrees</summary>
@@ -203,22 +205,36 @@ Quickly create a worktree for a PR or existing branch. Works with fork PRs regar
 <details>
 <summary><strong><a id="commands-remove">remove</a></strong> — Remove a worktree</summary>
 
-**Spec:** `remove [--force] [--yes] <worktree_name>`
+**Spec:** `remove [--force] [--yes] [--delete-branch] <worktree_name>`
 
 **Aliases:** `rm`
 
 Removes a worktree. Git refuses to delete worktrees with unmerged commits unless `--force` is used.
 
+- `--delete-branch`: Delete the local Git branch associated with the worktree
 - `--yes`: Automatically execute new or modified hooks without prompting
 
 </details>
 
 <details>
-<summary><strong><a id="commands-install">install</a></strong> — Install gh-worktree</summary>
+<summary><strong><a id="commands-prune">prune</a></strong> — Remove worktrees for merged pull requests</summary>
+
+**Spec:** `prune [--force] [--yes]`
+
+Finds worktrees whose local branch head matches a merged GitHub pull request. Unless you use
+`--yes`, treefort prompts before it removes each worktree and local branch.
+
+- `--force`: Bypass Git safety checks when treefort removes the worktree
+- `--yes`: Skip removal prompts and execute new or modified hooks without prompting
+
+</details>
+
+<details>
+<summary><strong><a id="commands-install">install</a></strong> — Install treefort</summary>
 
 **Spec:** `install [--alias=<name>] [--gh-ext] [--path-bin] [--force]`
 
-Installs gh-worktree as a GitHub CLI extension or to your PATH. Without options, prompts for installation method.
+Installs treefort as a GitHub CLI extension or to your PATH. Without options, prompts for installation method.
 
 - `--gh-ext`: Install as `gh` extension
 - `--path-bin`: Install to `~/.local/bin` or `~/bin`
@@ -232,7 +248,7 @@ Installs gh-worktree as a GitHub CLI extension or to your PATH. Without options,
 
 **Spec:** `version`
 
-Outputs the installed version of gh-worktree.
+Outputs the installed version of treefort.
 
 </details>
 
@@ -244,35 +260,34 @@ Tested on Linux. Requires Python 3.10+ for PEX.
 
 ### As a GitHub CLI extension (`gh`)
 
-1. Download the [latest release](https://github.com/bjester/gh-worktree/releases) binary.
-2. Make executable: `chmod +x gh-worktree`
-3. Install: `./gh-worktree install --gh-ext`
-4. Test: `gh worktree`
+1. Download the [latest release](https://github.com/bjester/treefort/releases) binary.
+2. Make executable: `chmod +x treefort`
+3. Install: `./treefort install --gh-ext`
+4. Test: `gh treefort`
 
 ### Standalone
 
-1. Download the [latest release](https://github.com/bjester/gh-worktree/releases) binary or PEX.
-2. Make executable: `chmod +x gh-worktree*`
-3. Install: `./gh-worktree install --path-bin` or `./gh-worktree.pex install --path-bin`
-4. Test: `gh-worktree version`
+1. Download the [latest release](https://github.com/bjester/treefort/releases) binary or PEX.
+2. Make executable: `chmod +x treefort*`
+3. Install: `./treefort install --path-bin` or `./treefort.pex install --path-bin`
+4. Test: `treefort version`
 
 ### Aliasing
 
 ```bash
-./gh-worktree install --alias=wktr --path-bin
+./treefort install --alias=wktr --path-bin
 wktr version
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/bjester/gh-worktree.git
-cd gh-worktree
-uv venv
-source .venv/bin/activate
+git clone https://github.com/bjester/treefort.git
+cd treefort
 uv sync --group dev
-make dist/gh-worktree
-./dist/gh-worktree install --path-bin
+source .venv/bin/activate
+make dist/treefort
+./dist/treefort install --path-bin
 ```
 
 ---

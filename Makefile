@@ -4,14 +4,14 @@ SHELL := /bin/bash
 
 build: | clean
 	$(MAKE) build-whl
-	$(MAKE) dist/gh-worktree.pex
-	$(MAKE) dist/gh-worktree
+	$(MAKE) dist/treefort.pex
+	$(MAKE) dist/treefort
 
-dist/gh-worktree:
-	uv run pyinstaller gh-worktree.spec
+dist/treefort:
+	uv run pyinstaller treefort.spec
 
-dist/gh-worktree.pex:
-	uv run pex -v . -e gh_worktree.cli:main -o dist/gh-worktree.pex
+dist/treefort.pex:
+	uv run pex -v . -e treefort.cli:main -o dist/treefort.pex
 
 build-whl:
 	uv build --wheel --out-dir ./dist
@@ -19,5 +19,5 @@ build-whl:
 clean:
 	rm -rf ./build ./dist
 
-install: | dist/gh-worktree
-	./dist/gh-worktree install
+install: | dist/treefort
+	./dist/treefort install

@@ -2,10 +2,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase
 
-from gh_worktree.gh import GithubCLI
-from gh_worktree.git import GitCLI
-from gh_worktree.logger import setup_logger
-from gh_worktree.templates import Templates
+from treefort.gh import GithubCLI
+from treefort.git import GitCLI
+from treefort.logger import setup_logger
+from treefort.templates import Templates
 
 
 class RuntimeOperatorLoggerTestCase(TestCase):

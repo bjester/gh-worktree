@@ -2,8 +2,8 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from gh_worktree.context import Context
-from gh_worktree.errors import ProjectNotFoundError
+from treefort.context import Context
+from treefort.errors import ProjectNotFoundError
 
 
 class ContextTestCase(TestCase):

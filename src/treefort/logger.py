@@ -1,0 +1,131 @@
+"""Logging utility for treefort CLI."""
+
+import logging
+import sys
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+# ANSI color codes
+COLORS = {
+    "red": "\033[91m",
+    "green": "\033[92m",
+    "yellow": "\033[93m",
+    "blue": "\033[94m",
+    "magenta": "\033[95m",
+    "cyan": "\033[96m",
+    "reset": "\033[0m",
+}
+MAX_LOG_SIZE = 10 * 1024 * 1024
+LOG_BACKUP = 5
+
+
+class ColorFormatter(logging.Formatter):
+    """Formatter that applies colors based on log level or explicit color."""
+
+    LEVEL_COLORS = {
+        logging.DEBUG: COLORS["blue"],
+        logging.WARNING: COLORS["yellow"],
+        logging.ERROR: COLORS["red"],
+        logging.CRITICAL: COLORS["red"],
+    }
+
+    def __init__(self, fmt: str, use_color: bool = True, base_logger_name: str | None = None):
+        super().__init__(fmt)
+        self.use_color = use_color
+        self.base_logger_name = base_logger_name
+        self.user_dir = Path("~").expanduser()
+
+    def format(self, record: logging.LogRecord) -> str:
+        # Use explicit color from extra if provided, otherwise use level-based color
+        color = getattr(record, "color", None)
+        if color and color in COLORS:
+            color_code = COLORS[color]
+        else:
+            color_code = self.LEVEL_COLORS.get(record.levelno, COLORS["reset"])
+
+        message = super().format(record).replace(f"{self.user_dir}/", "~/")
+        if self.base_logger_name and not record.name.startswith(self.base_logger_name):
+            message = f"{record.name} | {message}"
+        if self.use_color and color_code:
+            return f"{color_code}{message}{COLORS['reset']}"
+        return message
+
+
+def setup_logger(
+    name: str,
+    log_dir: Path | None = None,
+    verbose: bool = False,
+    debug_log_path: Path | None = None,
+    max_log_size: int = MAX_LOG_SIZE,
+) -> logging.Logger:
+    """
+    Set up logging with console and file handlers.
+
+    :param name: Logger name
+    :param log_dir: Directory for log files (defaults to ~/.treefort/logs)
+    :param verbose: Enable debug logging with full subprocess output
+    :param debug_log_path: Specific path for debug log file
+    :param max_log_size: Maximum size of log files in bytes
+    :return: Configured logger
+    """
+    logger_level = logging.DEBUG if verbose else logging.INFO
+    handlers: list[logging.Handler] = []
+
+    # Console formatter - colored, no timestamp for user-facing output
+    console_fmt = "%(message)s"
+    console_formatter = ColorFormatter(
+        console_fmt,
+        use_color=sys.stdout.isatty(),
+        base_logger_name=name,
+    )
+
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(console_formatter)
+    handlers.append(console_handler)
+
+    # File handlers (if log_dir provided)
+    if log_dir:
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        # Default log file - timestamps and commands
+        default_log_file = log_dir / "treefort.log"
+        file_fmt = "%(asctime)s [%(levelname)s] %(name)s | %(message)s"
+        file_formatter = logging.Formatter(file_fmt, datefmt="%Y-%m-%d %H:%M:%S")
+
+        file_handler = RotatingFileHandler(
+            default_log_file, maxBytes=max_log_size, backupCount=LOG_BACKUP, encoding="utf-8"
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(file_formatter)
+        handlers.append(file_handler)
+
+        # Debug log file (if verbose or debug_log_path specified)
+        if verbose or debug_log_path:
+            debug_file = debug_log_path or (log_dir / "treefort-debug.log")
+            debug_formatter = logging.Formatter(
+                "%(asctime)s [%(levelname)s] %(name)s | %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+
+            debug_handler = RotatingFileHandler(
+                debug_file, maxBytes=max_log_size, backupCount=LOG_BACKUP, encoding="utf-8"
+            )
+            debug_handler.setLevel(logging.DEBUG)
+            debug_handler.setFormatter(debug_formatter)
+            handlers.append(debug_handler)
+
+            # Also log command output to debug file
+            console_handler.setLevel(logging.DEBUG)
+
+    logging.basicConfig(
+        level=logger_level,
+        handlers=handlers,
+        force=True,
+    )
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logger_level)
+
+    return logger
