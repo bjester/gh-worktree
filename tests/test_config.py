@@ -100,6 +100,28 @@ class ConfigManagerTestCase(TestCase):
         self.assertEqual(config.allowed_hooks.get("/tmp/hook.sh"), "abc123")
         self.assertTrue((self.config_dir / "allowed_hooks.json").exists())
 
+    def test_save_config__allowed_hooks_without_cached_global_config_saves(self):
+        manager = ConfigManager()
+        allowed_hooks = AllowedHooksConfig(JsonConfigIO(self.config_dir / "allowed_hooks.json"))
+        allowed_hooks.update({"/tmp/hook.sh": "abc123"})
+
+        manager.save_config(allowed_hooks)
+
+        document = json.loads((self.config_dir / "allowed_hooks.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            document,
+            {"type": "allowed_hooks", "hooks": {"/tmp/hook.sh": "abc123"}},
+        )
+
+    def test_save_config__allowed_hooks_updates_cached_global_config(self):
+        manager = ConfigManager()
+        global_config = manager.get_global_config(self.config_dir)
+
+        allowed_hooks = AllowedHooksConfig(JsonConfigIO(self.config_dir / "allowed_hooks.json"))
+        manager.save_config(allowed_hooks)
+
+        self.assertIs(global_config.allowed_hooks, allowed_hooks)
+
 
 class ConfigIOTestCase(TestCase):
     def setUp(self):
