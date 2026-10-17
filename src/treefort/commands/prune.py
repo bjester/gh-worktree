@@ -79,7 +79,7 @@ class PruneCommand(Command):
                 continue
 
             branch_name = branch_ref.removeprefix("refs/heads/")
-            worktree_name = Path(wt["path"]).name
+            worktree_name = Path(wt["path"]).resolve().relative_to(project_dir.resolve()).as_posix()
 
             pr_infos = self._runtime.gh.merged_pr_by_head(
                 branch_name, owner_repo=f"{config.owner}/{config.name}"

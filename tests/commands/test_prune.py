@@ -100,6 +100,34 @@ class PruneCommandTestCase(TestCase):
         )
         self.logger.info.assert_any_call("Successfully pruned 'feature-branch'")
 
+    def test_call__prunes_nested_worktree(self):
+        nested_dir = self.project_dir / "subpath" / "feature"
+        nested_dir.mkdir(parents=True)
+
+        self.git.list_worktrees.return_value = [
+            {"path": str(nested_dir), "branch": "refs/heads/subpath/feature", "is_bare": False},
+        ]
+        self.git.get_branch_head.return_value = "abc123def456"
+        self.gh.merged_pr_by_head.return_value = [
+            {
+                "number": 456,
+                "title": "Nested feature",
+                "url": "https://github.com/octo/repo/pull/456",
+                "headRefOid": "abc123def456",
+            }
+        ]
+
+        self.command(yes=True)
+
+        self.git.remove_worktree.assert_called_once_with("subpath/feature", force=False)
+        self.git.delete_branch_if_head.assert_called_once_with("subpath/feature", "abc123def456")
+        self.hooks.fire.assert_any_call(
+            Hook.pre_remove, "subpath/feature", "subpath-feature", bypass_allowlist=True
+        )
+        self.hooks.fire.assert_any_call(
+            Hook.post_remove, "subpath/feature", "subpath-feature", bypass_allowlist=True
+        )
+
     def test_call__skips_reused_branch(self):
         wt_path = str(self.project_dir / "reused-branch")
         (self.project_dir / "reused-branch").mkdir()
