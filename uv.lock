@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.10"
 
 [options]
-exclude-newer = "2026-06-08T00:54:20.308222136Z"
+exclude-newer = "2026-10-10T22:35:53.180249283Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -315,7 +315,7 @@ wheels = [
 
 [[package]]
 name = "treefort"
-version = "0.5.0b1"
+version = "0.5.0b2"
 source = { editable = "." }
 dependencies = [
     { name = "fire" },
