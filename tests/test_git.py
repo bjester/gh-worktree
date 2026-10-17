@@ -123,6 +123,55 @@ class GitCLITestCase(TestCase):
             ["worktree", "remove", "--force", "--", "old-tree"], cwd=None
         )
 
+    def test_list_worktrees(self):
+        self.mock_iter_output.return_value = [
+            "worktree /repo",
+            "HEAD 0123456789abcdef0123456789abcdef01234567",
+            "branch refs/heads/main",
+            "",
+            "worktree /repo/.git/worktrees/feature",
+            "HEAD 89abcdef0123456789abcdef0123456789abcdef",
+            "branch refs/heads/feature/existing-branch",
+            "",
+            "worktree /repo/.git/worktrees/detached",
+            "HEAD fedcba9876543210fedcba9876543210fedcba98",
+            "detached HEAD",
+            "",
+            "worktree /bare-clone",
+            "HEAD 000102030405060708090a0b0c0d0e0f10111213",
+            "bare",
+            "",
+        ]
+
+        worktrees = self.cli.list_worktrees()
+
+        self.mock_iter_output.assert_called_once_with(["worktree", "list", "--porcelain"])
+        self.assertEqual(
+            worktrees,
+            [
+                {"path": "/repo", "branch": "refs/heads/main", "is_bare": False},
+                {
+                    "path": "/repo/.git/worktrees/feature",
+                    "branch": "refs/heads/feature/existing-branch",
+                    "is_bare": False,
+                },
+                {"path": "/repo/.git/worktrees/detached", "branch": None, "is_bare": False},
+                {"path": "/bare-clone", "branch": None, "is_bare": True},
+            ],
+        )
+
+    def test_delete_branch(self):
+        self.cli.delete_branch("feature-branch")
+        self.mock_stream_exec.assert_called_once_with(
+            ["branch", "-d", "--", "feature-branch"], cwd=None
+        )
+
+    def test_delete_branch__force(self):
+        self.cli.delete_branch("feature-branch", force=True)
+        self.mock_stream_exec.assert_called_once_with(
+            ["branch", "-D", "--", "feature-branch"], cwd=None
+        )
+
     def test_get_branch_head(self):
         run_patcher = mock.patch("treefort.git.SubprocessOperator.run")
         mock_run = run_patcher.start()
