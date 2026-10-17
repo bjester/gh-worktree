@@ -212,7 +212,18 @@ class AllowedHooksConfig(Config):
         self._data.update(hooks=hooks)
 
     def get(self, key: str, default: Any = None):
-        """Save the config to a file."""
+        """Look up the checksum recorded for an allowed hook file.
+
+        Reads the ``hooks`` mapping from the config data and returns the entry
+        stored under ``key``. Returns ``default`` when the hook is not allowed,
+        including when no ``hooks`` mapping has been saved yet.
+
+        :param key: Path of the hook file whose checksum is requested.
+        :param default: Value returned when ``key`` is absent. Defaults to
+            ``None``.
+        :returns: The checksum string for the hook, or ``default``.
+        :rtype: Any
+        """
         return super().get("hooks", default={}).get(key, default)
 
 
