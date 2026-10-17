@@ -8,7 +8,9 @@ from treefort.runtime import Runtime
 
 class RuntimeTestCase(TestCase):
     def setUp(self):
-        self.runtime = Runtime(name="test")
+        # the lookup methods only need `context` and `git`, so skip real runtime
+        # construction to avoid logging and migration side effects
+        self.runtime = Runtime.__new__(Runtime)
         self.config = SimpleNamespace(owner="octo", name="repo")
         self.runtime.context = SimpleNamespace(
             get_config=lambda: self.config,
