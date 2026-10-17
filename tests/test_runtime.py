@@ -1,5 +1,7 @@
+from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase
+from unittest.mock import DEFAULT, Mock, PropertyMock, patch
 
 from treefort.errors import RemoteUsageError
 from treefort.git import GitRemote
@@ -21,6 +23,68 @@ class RuntimeTestCase(TestCase):
             GitRemote("other", "git@github.com:other/repo.git", "fetch"),
         ]
         self.runtime.git = SimpleNamespace(remote=lambda: self.remotes)
+
+    def test_init__migrates_before_accessing_global_config_dir(self):
+        """Migration must complete before the log directory is resolved or operators exist."""
+        events: list[str] = []
+        log_root = Path("/tmp/treefort-global-config")
+
+        def record(event: str):
+            def record_event(*args, **kwargs):
+                events.append(event)
+                return DEFAULT
+
+            return record_event
+
+        def read_global_config_dir(*args, **kwargs):
+            events.append("global_config_dir")
+            return log_root
+
+        class TracedContext:
+            """Stand-in for Context that surfaces migration and directory access as events."""
+
+            instances: list["TracedContext"] = []
+
+            global_config_dir = PropertyMock(side_effect=read_global_config_dir)
+
+            def __init__(self):
+                self.migrate = Mock(side_effect=record("migrate"))
+                TracedContext.instances.append(self)
+
+        logger = Mock()
+        log_opener = Mock(side_effect=record("setup_logger"), return_value=logger)
+        operators = {
+            "hooks": Mock(side_effect=record("hooks")),
+            "git": Mock(side_effect=record("git")),
+            "gh": Mock(side_effect=record("gh")),
+            "templates": Mock(side_effect=record("templates")),
+        }
+
+        with (
+            patch("treefort.runtime.Context", TracedContext),
+            patch("treefort.runtime.setup_logger", log_opener),
+            patch("treefort.runtime.Hooks", operators["hooks"]),
+            patch("treefort.runtime.GitCLI", operators["git"]),
+            patch("treefort.runtime.GithubCLI", operators["gh"]),
+            patch("treefort.runtime.Templates", operators["templates"]),
+        ):
+            runtime = Runtime(name="test", verbose=True)
+
+        self.assertEqual(
+            events,
+            ["migrate", "global_config_dir", "setup_logger", "hooks", "git", "gh", "templates"],
+        )
+
+        context = TracedContext.instances[0]
+        context.migrate.assert_called_once_with()
+        log_opener.assert_called_once_with(
+            "test",
+            log_dir=log_root / "logs",
+            verbose=True,
+        )
+        self.assertEqual(runtime.logger, logger)
+        for operator in operators.values():
+            operator.assert_called_once()
 
     def test_get_remote__no_args_raises(self):
         with self.assertRaises(RemoteUsageError, msg="Must provide either owner_name or name"):
