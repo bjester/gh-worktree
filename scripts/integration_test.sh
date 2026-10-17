@@ -155,10 +155,19 @@ cd project-rename
 rm -rf AGENTS.md .aiassistant/ .gemini/
 cd ..
 
+if ! git show-ref --verify --quiet refs/heads/project-rename; then
+    echo "FAIL: Local branch ref 'refs/heads/project-rename' does not exist before prune"
+    exit 1
+fi
+
 uv run treefort prune --yes
 
 if [ -d "project-rename" ]; then
     echo "FAIL: project-rename/ still exists after prune"
+    exit 1
+fi
+if git show-ref --verify --quiet refs/heads/project-rename; then
+    echo "FAIL: Local branch ref 'refs/heads/project-rename' still exists after prune"
     exit 1
 fi
 

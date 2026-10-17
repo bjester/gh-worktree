@@ -1,3 +1,5 @@
+import subprocess
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase, mock
@@ -133,3 +135,67 @@ class GitCLITestCase(TestCase):
         result = self.cli.get_branch_head("feature-branch")
         mock_run.assert_called_once_with(["rev-parse", "feature-branch"])
         self.assertEqual(result, "abc123def456")
+
+
+class GitCLIDeleteBranchIfHeadTestCase(TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.repo_dir = Path(self.tmp_dir.name) / "repo"
+        self.repo_dir.mkdir()
+        self.run_git("init", "--quiet")
+        self.run_git("config", "user.name", "Treefort Test")
+        self.run_git("config", "user.email", "treefort@example.invalid")
+        self.run_git("commit", "--allow-empty", "--quiet", "-m", "initial")
+        self.run_git("branch", "feature")
+
+        context = SimpleNamespace(cwd=self.repo_dir)
+        self.cli = GitCLI(context, setup_logger("test"))
+
+    def tearDown(self):
+        self.tmp_dir.cleanup()
+
+    def run_git(self, *args: str) -> str:
+        process = subprocess.run(
+            ["git", *args],
+            cwd=self.repo_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return process.stdout.strip()
+
+    def git_succeeds(self, *args: str) -> bool:
+        process = subprocess.run(
+            ["git", *args],
+            cwd=self.repo_dir,
+            capture_output=True,
+            text=True,
+        )
+        return process.returncode == 0
+
+    def test_delete_branch_if_head__retains_branch_when_head_changed(self):
+        verified_head = self.run_git("rev-parse", "feature")
+        self.run_git("commit", "--allow-empty", "--quiet", "-m", "advanced")
+        advanced_head = self.run_git("rev-parse", "HEAD")
+        self.run_git("branch", "--force", "feature", advanced_head)
+
+        with self.assertRaises(CommandError):
+            self.cli.delete_branch_if_head("feature", verified_head)
+
+        self.assertEqual(self.run_git("rev-parse", "feature"), advanced_head)
+
+    def test_delete_branch_if_head__removes_matching_branch_and_branch_config(self):
+        expected_head = self.run_git("rev-parse", "feature")
+        self.run_git("config", "branch.feature.remote", "origin")
+
+        self.cli.delete_branch_if_head("feature", expected_head)
+
+        self.assertFalse(self.git_succeeds("show-ref", "--verify", "refs/heads/feature"))
+        self.assertFalse(self.git_succeeds("config", "--get", "branch.feature.remote"))
+
+        self.run_git("branch", "without-config")
+        expected_head = self.run_git("rev-parse", "without-config")
+
+        self.cli.delete_branch_if_head("without-config", expected_head)
+
+        self.assertFalse(self.git_succeeds("show-ref", "--verify", "refs/heads/without-config"))

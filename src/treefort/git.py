@@ -1,4 +1,5 @@
 import re
+import subprocess
 from collections import namedtuple
 from collections.abc import Iterator
 from pathlib import Path
@@ -88,6 +89,26 @@ class GitCLI(SubprocessOperator):
         """Delete a local branch"""
         args = ["branch", "-d" if not force else "-D", "--", name]
         self.stream_exec(args)
+
+    def delete_branch_if_head(self, name: str, expected_head: str):
+        """Delete a local branch only if it still points to the expected commit."""
+        self.stream_exec(["update-ref", "-d", f"refs/heads/{name}", expected_head])
+        self._remove_branch_config(name)
+
+    def _remove_branch_config(self, name: str):
+        config_pattern = rf"^branch\.{re.escape(name)}\."
+        try:
+            with self.run(["config", "--get-regexp", config_pattern]):
+                pass
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 1:
+                return
+            raise CommandError(
+                f"Command failed, with exit status {e.returncode}: "
+                f"{self.command_name} config --get-regexp {config_pattern}"
+            ) from e
+
+        self.stream_exec(["config", "--remove-section", f"branch.{name}"])
 
     def get_branch_head(self, branch_name: str) -> str:
         """Get the HEAD commit SHA of a given branch"""
