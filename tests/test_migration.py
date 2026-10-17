@@ -218,3 +218,56 @@ class ContextMigrationTestCase(TestCase):
         # Legacy directories should be removed
         self.assertFalse(old_config_dir.exists())
         self.assertFalse((home_dir / ".gh").exists())
+
+    @patch("treefort.context.find_up")
+    @patch("treefort.context.Path.home")
+    def test_migrate__skips_filesystem_discovery_after_successful_attempt(
+        self, mock_home, mock_find_up
+    ):
+        """Should not search the filesystem again once a migration attempt succeeded"""
+        from treefort.errors import AncestorNotFoundError
+
+        home_dir = self.tmp_path / "home"
+        old_config_dir = home_dir / ".gh" / "worktree"
+        old_config_dir.mkdir(parents=True)
+        (old_config_dir / "config.json").write_text('{"type": "global", "test": "value"}')
+        mock_home.return_value = home_dir
+        mock_find_up.side_effect = AncestorNotFoundError("Not found")
+
+        self.context.migrate()
+
+        self.assertTrue((home_dir / ".treefort" / "config.json").exists())
+
+        mock_find_up.reset_mock()
+        mock_home.reset_mock()
+
+        self.context.migrate()
+
+        mock_find_up.assert_not_called()
+        mock_home.assert_not_called()
+
+    @patch("treefort.context.migrate_old_config")
+    @patch("treefort.context.find_up")
+    def test_migrate__retries_after_failed_attempt(self, mock_find_up, mock_migrate):
+        """Should retry the migration flow after an attempt raised an exception"""
+        project_root = self.tmp_path / "project"
+        (project_root / ".bare").mkdir(parents=True)
+        global_gh_dir = self.tmp_path / "global" / ".gh"
+        (global_gh_dir / "worktree").mkdir(parents=True)
+
+        def find_legacy(name, start=None):
+            if name == ".bare":
+                return project_root / ".bare"
+            return global_gh_dir
+
+        mock_find_up.side_effect = find_legacy
+        mock_migrate.side_effect = [OSError("migration interrupted"), True]
+
+        with self.assertRaises(OSError):
+            self.context.migrate()
+
+        self.assertEqual(mock_migrate.call_count, 1)
+
+        self.context.migrate()
+
+        self.assertEqual(mock_migrate.call_count, 2)
