@@ -107,10 +107,14 @@ class Context:
             closest_gh_dir = find_up(".gh", parent_dir)
             old_global_config_dir = closest_gh_dir / "worktree"
             new_global_config_dir = closest_gh_dir.parent / ".treefort"
-            if old_global_config_dir.exists():
-                migrate_old_config(old_global_config_dir, new_global_config_dir)
         except AncestorNotFoundError:
-            pass
+            # No .gh ancestor, fall back to the standard user locations
+            home_dir = Path.home()
+            old_global_config_dir = home_dir / ".gh" / "worktree"
+            new_global_config_dir = home_dir / ".treefort"
+
+        if old_global_config_dir.exists():
+            migrate_old_config(old_global_config_dir, new_global_config_dir)
 
         if skip_project_config:
             return
