@@ -18,6 +18,9 @@ class Runtime:
         self.verbose = verbose
         self.context = Context()
 
+        # run migrations before resolving any configuration directories
+        self.context.migrate()
+
         log_dir = self.context.global_config_dir / "logs"
         logger = setup_logger(
             name,
@@ -31,9 +34,6 @@ class Runtime:
         self.git = GitCLI(self.context, self.logger)
         self.gh = GithubCLI(self.context, self.logger)
         self.templates = Templates(self.context, self.logger)
-
-        # run migrations
-        self.context.migrate()
 
     def get_default_remote(self) -> GitRemote | None:
         return self.get_remote(owner_name=self.context.get_config().owner)
