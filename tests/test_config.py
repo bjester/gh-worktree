@@ -20,9 +20,106 @@ from treefort.errors import ConfigTypeError
 
 
 class ConfigProtocolTestCase(TestCase):
-    def test_protocol_has_required_methods(self):
+    def test_save__is_declared(self):
         self.assertTrue(hasattr(ConfigProtocol, "save"))
+
+    def test_load__is_declared(self):
         self.assertTrue(hasattr(ConfigProtocol, "load"))
+
+
+class JsonConfigIOTestCase(TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = Path(self.tmp_dir.name)
+
+    def tearDown(self):
+        self.tmp_dir.cleanup()
+
+    def test_init__raises_for_invalid_extension(self):
+        with self.assertRaises(ConfigTypeError):
+            JsonConfigIO(self.tmp_path / "config.toml")
+
+    def test_read__missing_file_returns_empty_dict(self):
+        io = JsonConfigIO(self.tmp_path / "config.json")
+        self.assertEqual(io.read(), {})
+
+    def test_write__round_trips_data(self):
+        io = JsonConfigIO(self.tmp_path / "config.json")
+        io.write({"type": "repository", "owner": "octo"})
+
+        self.assertEqual(io.read(), {"type": "repository", "owner": "octo"})
+
+
+class TomlConfigIOTestCase(TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = Path(self.tmp_dir.name)
+
+    def tearDown(self):
+        self.tmp_dir.cleanup()
+
+    def test_read__missing_file_returns_empty_dict(self):
+        io = TomlConfigIO(self.tmp_path / "config.toml")
+        self.assertEqual(io.read(), {})
+
+    def test_write__round_trips_data(self):
+        io = TomlConfigIO(self.tmp_path / "config.toml")
+        io.write({"type": "repository", "owner": "octo"})
+
+        self.assertEqual(io.read(), {"type": "repository", "owner": "octo"})
+
+
+class RepositoryConfigTestCase(TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = Path(self.tmp_dir.name)
+
+    def tearDown(self):
+        self.tmp_dir.cleanup()
+
+    def test_load__raises_for_invalid_type(self):
+        io = JsonConfigIO(self.tmp_path / "config.json")
+        io.write({"type": "global"})
+        config = RepositoryConfig(io)
+
+        with self.assertRaises(ConfigTypeError):
+            config.load()
+
+    def test_save__round_trips_values(self):
+        io = TomlConfigIO(self.tmp_path / "config.toml")
+        config = RepositoryConfig(io)
+        config.update(owner="octo", name="repo")
+        config.save()
+
+        loaded = RepositoryConfig(io)
+        loaded.load()
+        self.assertEqual(loaded.get("owner"), "octo")
+        self.assertEqual(loaded.get("name"), "repo")
+
+
+class GlobalConfigTestCase(TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.TemporaryDirectory()
+        self.tmp_path = Path(self.tmp_dir.name)
+
+    def tearDown(self):
+        self.tmp_dir.cleanup()
+
+    def test_save__persists_global_and_allowed_hooks_config(self):
+        global_io = TomlConfigIO(self.tmp_path / "config.toml")
+        allowed_hooks_io = JsonConfigIO(self.tmp_path / "allowed_hooks.json")
+        allowed_hooks = AllowedHooksConfig(allowed_hooks_io)
+        config = GlobalConfig(global_io, allowed_hooks)
+        config.update(allowed_envvars=["TOKEN"])
+        config.allow_hook("/tmp/hook.sh", "abc123")
+        config.save()
+
+        loaded_global = GlobalConfig(global_io, AllowedHooksConfig(allowed_hooks_io))
+        loaded_global.load()
+        loaded_global.allowed_hooks.load()
+
+        self.assertEqual(loaded_global.allowed_envvars, ["TOKEN"])
+        self.assertEqual(loaded_global.allowed_hooks.get("/tmp/hook.sh"), "abc123")
 
 
 class ConfigManagerTestCase(TestCase):
@@ -122,84 +219,7 @@ class ConfigManagerTestCase(TestCase):
 
         self.assertIs(global_config.allowed_hooks, allowed_hooks)
 
-
-class ConfigIOTestCase(TestCase):
-    def setUp(self):
-        self.tmp_dir = tempfile.TemporaryDirectory()
-        self.tmp_path = Path(self.tmp_dir.name)
-
-    def tearDown(self):
-        self.tmp_dir.cleanup()
-
-    def test_config_io__raises_for_invalid_extension(self):
-        with self.assertRaises(ConfigTypeError):
-            JsonConfigIO(self.tmp_path / "config.toml")
-
-    def test_json_config_io__read_missing_returns_empty_dict(self):
-        io = JsonConfigIO(self.tmp_path / "config.json")
-        self.assertEqual(io.read(), {})
-
-    def test_json_config_io__write_and_read_round_trip(self):
-        io = JsonConfigIO(self.tmp_path / "config.json")
-        io.write({"type": "repository", "owner": "octo"})
-
-        self.assertEqual(io.read(), {"type": "repository", "owner": "octo"})
-
-    def test_toml_config_io__read_missing_returns_empty_dict(self):
-        io = TomlConfigIO(self.tmp_path / "config.toml")
-        self.assertEqual(io.read(), {})
-
-    def test_toml_config_io__write_and_read_round_trip(self):
-        io = TomlConfigIO(self.tmp_path / "config.toml")
-        io.write({"type": "repository", "owner": "octo"})
-
-        self.assertEqual(io.read(), {"type": "repository", "owner": "octo"})
-
-
-class ConfigModelTestCase(TestCase):
-    def setUp(self):
-        self.tmp_dir = tempfile.TemporaryDirectory()
-        self.tmp_path = Path(self.tmp_dir.name)
-
-    def tearDown(self):
-        self.tmp_dir.cleanup()
-
-    def test_repository_config__load_raises_for_invalid_type(self):
-        io = JsonConfigIO(self.tmp_path / "config.json")
-        io.write({"type": "global"})
-        config = RepositoryConfig(io)
-
-        with self.assertRaises(ConfigTypeError):
-            config.load()
-
-    def test_repository_config__save_then_load_round_trip(self):
-        io = TomlConfigIO(self.tmp_path / "config.toml")
-        config = RepositoryConfig(io)
-        config.update(owner="octo", name="repo")
-        config.save()
-
-        loaded = RepositoryConfig(io)
-        loaded.load()
-        self.assertEqual(loaded.get("owner"), "octo")
-        self.assertEqual(loaded.get("name"), "repo")
-
-    def test_global_config__allow_hook_and_save_persists_both_files(self):
-        global_io = TomlConfigIO(self.tmp_path / "config.toml")
-        allowed_hooks_io = JsonConfigIO(self.tmp_path / "allowed_hooks.json")
-        allowed_hooks = AllowedHooksConfig(allowed_hooks_io)
-        config = GlobalConfig(global_io, allowed_hooks)
-        config.update(allowed_envvars=["TOKEN"])
-        config.allow_hook("/tmp/hook.sh", "abc123")
-        config.save()
-
-        loaded_global = GlobalConfig(global_io, AllowedHooksConfig(allowed_hooks_io))
-        loaded_global.load()
-        loaded_global.allowed_hooks.load()
-
-        self.assertEqual(loaded_global.allowed_envvars, ["TOKEN"])
-        self.assertEqual(loaded_global.allowed_hooks.get("/tmp/hook.sh"), "abc123")
-
-    def test_config_manager_save_config__repository_updates_cached_instance(self):
+    def test_save_config__repository_updates_cached_instance(self):
         manager = ConfigManager()
         repo = RepositoryConfig(TomlConfigIO(self.tmp_path / "config.toml"))
         repo.update(owner="octo")
@@ -209,7 +229,7 @@ class ConfigModelTestCase(TestCase):
         cached = manager.get_config(self.tmp_path)
         self.assertIs(cached, repo)
 
-    def test_config_manager_save_config__unknown_type_raises(self):
+    def test_save_config__unknown_type_raises(self):
         class UnknownConfig:
             def save(self):
                 return None
